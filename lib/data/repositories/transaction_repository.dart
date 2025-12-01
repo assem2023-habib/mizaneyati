@@ -1,9 +1,11 @@
-import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/transaction_type.dart';
-import '../local/app_database.dart';
+import '../../domain/entities/transaction_entity.dart';
+import '../../domain/entities/account_entity.dart';
 import '../local/daos/transactions_dao.dart';
 import '../local/daos/accounts_dao.dart';
+import '../local/mappers/transaction_mapper.dart';
+import '../local/mappers/account_mapper.dart';
 
 class TransactionRepository {
   final TransactionsDao _transactionsDao;
@@ -13,18 +15,29 @@ class TransactionRepository {
   TransactionRepository(this._transactionsDao, this._accountsDao);
 
   // Get all transactions
-  Future<List<Transaction>> getAllTransactions() =>
-      _transactionsDao.getAllTransactions();
+  Future<List<TransactionEntity>> getAllTransactions() async {
+    final transactions = await _transactionsDao.getAllTransactions();
+    return transactions.map((t) => t.toEntity()).toList();
+  }
 
   // Watch all transactions
-  Stream<List<Transaction>> watchAllTransactions() =>
-      _transactionsDao.watchAllTransactions();
+  Stream<List<TransactionEntity>> watchAllTransactions() {
+    return _transactionsDao.watchAllTransactions().map(
+      (transactions) => transactions.map((t) => t.toEntity()).toList(),
+    );
+  }
 
   // Get transactions by date range
-  Future<List<Transaction>> getTransactionsByDateRange(
+  Future<List<TransactionEntity>> getTransactionsByDateRange(
     DateTime start,
     DateTime end,
-  ) => _transactionsDao.getTransactionsByDateRange(start, end);
+  ) async {
+    final transactions = await _transactionsDao.getTransactionsByDateRange(
+      start,
+      end,
+    );
+    return transactions.map((t) => t.toEntity()).toList();
+  }
 
   // Create transaction with account balance update
   Future<String> createTransaction({
@@ -38,19 +51,19 @@ class TransactionRepository {
   }) async {
     final id = _uuid.v4();
 
-    // Create transaction
-    final transaction = TransactionsCompanion(
-      id: Value(id),
-      amount: Value(amount),
-      type: Value(type),
-      categoryId: Value(categoryId),
-      accountId: Value(accountId),
-      date: Value(date),
-      note: Value(note),
-      receiptPath: Value(receiptPath),
-      createdAt: Value(DateTime.now()),
+    final entity = TransactionEntity(
+      id: id,
+      amount: amount,
+      type: type,
+      categoryId: categoryId,
+      accountId: accountId,
+      date: date,
+      note: note,
+      receiptPath: receiptPath,
+      createdAt: DateTime.now(),
     );
-    await _transactionsDao.insertTransaction(transaction);
+
+    await _transactionsDao.insertTransaction(entity.toCompanion());
 
     // Update account balance
     await _updateAccountBalance(accountId, amount, type);
@@ -59,35 +72,14 @@ class TransactionRepository {
   }
 
   // Update transaction
-  Future<bool> updateTransaction({
-    required String id,
-    double? amount,
-    TransactionType? type,
-    String? categoryId,
-    String? accountId,
-    DateTime? date,
-    String? note,
-    String? receiptPath,
-  }) async {
-    final transaction = TransactionsCompanion(
-      id: Value(id),
-      amount: amount != null ? Value(amount) : const Value.absent(),
-      type: type != null ? Value(type) : const Value.absent(),
-      categoryId: categoryId != null ? Value(categoryId) : const Value.absent(),
-      accountId: accountId != null ? Value(accountId) : const Value.absent(),
-      date: date != null ? Value(date) : const Value.absent(),
-      note: note != null ? Value(note) : const Value.absent(),
-      receiptPath: receiptPath != null
-          ? Value(receiptPath)
-          : const Value.absent(),
-    );
-    return await _transactionsDao.updateTransaction(transaction);
+  Future<bool> updateTransaction(TransactionEntity transaction) async {
+    return await _transactionsDao.updateTransaction(transaction.toCompanion());
   }
 
   // Delete transaction with account balance update
   Future<int> deleteTransaction(String id) async {
     // Get transaction first to update account balance
-    final transactions = await _transactionsDao.getAllTransactions();
+    final transactions = await getAllTransactions();
     final transaction = transactions.firstWhere((t) => t.id == id);
 
     // Delete transaction
@@ -95,7 +87,7 @@ class TransactionRepository {
 
     // Reverse the account balance change
     if (result > 0) {
-      final reverseType = transaction.type == TransactionType.expense.name
+      final reverseType = transaction.type == TransactionType.expense
           ? TransactionType.income
           : TransactionType.expense;
       await _updateAccountBalance(
@@ -116,7 +108,8 @@ class TransactionRepository {
   ) async {
     final account = await _accountsDao.getAccountById(accountId);
     if (account != null) {
-      double newBalance = account.balance;
+      final accountEntity = account.toEntity();
+      double newBalance = accountEntity.balance;
 
       if (type == TransactionType.expense) {
         newBalance -= amount;
@@ -124,9 +117,8 @@ class TransactionRepository {
         newBalance += amount;
       }
 
-      await _accountsDao.updateAccount(
-        AccountsCompanion(id: Value(accountId), balance: Value(newBalance)),
-      );
+      final updatedAccount = accountEntity.copyWith(balance: newBalance);
+      await _accountsDao.updateAccount(updatedAccount.toCompanion());
     }
   }
 }

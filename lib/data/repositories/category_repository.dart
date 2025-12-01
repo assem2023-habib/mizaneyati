@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/category_type.dart';
+import '../../domain/entities/category_entity.dart';
 import '../local/app_database.dart';
 import '../local/daos/categories_dao.dart';
+import '../local/mappers/category_mapper.dart';
 
 class CategoryRepository {
   final CategoriesDao _categoriesDao;
@@ -11,20 +13,30 @@ class CategoryRepository {
   CategoryRepository(this._categoriesDao);
 
   // Get all categories
-  Future<List<Category>> getAllCategories() =>
-      _categoriesDao.getAllCategories();
+  Future<List<CategoryEntity>> getAllCategories() async {
+    final categories = await _categoriesDao.getAllCategories();
+    return categories.map((c) => c.toEntity()).toList();
+  }
 
   // Watch all categories
-  Stream<List<Category>> watchAllCategories() =>
-      _categoriesDao.watchAllCategories();
+  Stream<List<CategoryEntity>> watchAllCategories() {
+    return _categoriesDao.watchAllCategories().map(
+      (categories) => categories.map((c) => c.toEntity()).toList(),
+    );
+  }
 
   // Get categories by type
-  Future<List<Category>> getCategoriesByType(CategoryType type) =>
-      _categoriesDao.getCategoriesByType(type);
+  Future<List<CategoryEntity>> getCategoriesByType(CategoryType type) async {
+    final categories = await _categoriesDao.getCategoriesByType(type);
+    return categories.map((c) => c.toEntity()).toList();
+  }
 
   // Watch categories by type
-  Stream<List<Category>> watchCategoriesByType(CategoryType type) =>
-      _categoriesDao.watchCategoriesByType(type);
+  Stream<List<CategoryEntity>> watchCategoriesByType(CategoryType type) {
+    return _categoriesDao
+        .watchCategoriesByType(type)
+        .map((categories) => categories.map((c) => c.toEntity()).toList());
+  }
 
   // Create category
   Future<String> createCategory({
@@ -34,33 +46,21 @@ class CategoryRepository {
     required CategoryType type,
   }) async {
     final id = _uuid.v4();
-    final category = CategoriesCompanion(
-      id: Value(id),
-      name: Value(name),
-      icon: Value(icon),
-      color: Value(color),
-      type: Value(type),
+    final entity = CategoryEntity(
+      id: id,
+      name: name,
+      icon: icon,
+      color: color,
+      type: type,
     );
-    await _categoriesDao.insertCategory(category);
+
+    await _categoriesDao.insertCategory(entity.toCompanion());
     return id;
   }
 
   // Update category
-  Future<bool> updateCategory({
-    required String id,
-    String? name,
-    String? icon,
-    String? color,
-    CategoryType? type,
-  }) async {
-    final category = CategoriesCompanion(
-      id: Value(id),
-      name: name != null ? Value(name) : const Value.absent(),
-      icon: icon != null ? Value(icon) : const Value.absent(),
-      color: color != null ? Value(color) : const Value.absent(),
-      type: type != null ? Value(type) : const Value.absent(),
-    );
-    return await _categoriesDao.updateCategory(category);
+  Future<bool> updateCategory(CategoryEntity category) async {
+    return await _categoriesDao.updateCategory(category.toCompanion());
   }
 
   // Delete category

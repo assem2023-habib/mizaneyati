@@ -1,9 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/account_type.dart';
+import '../../domain/entities/account_entity.dart';
 import '../local/app_database.dart';
 import '../local/daos/accounts_dao.dart';
-import '../local/tables.dart';
+import '../local/mappers/account_mapper.dart';
 
 class AccountRepository {
   final AccountsDao _accountsDao;
@@ -12,16 +13,29 @@ class AccountRepository {
   AccountRepository(this._accountsDao);
 
   // Get all accounts
-  Future<List<Account>> getAllAccounts() => _accountsDao.getAllAccounts();
+  Future<List<AccountEntity>> getAllAccounts() async {
+    final accounts = await _accountsDao.getAllAccounts();
+    return accounts.map((a) => a.toEntity()).toList();
+  }
 
   // Watch all accounts
-  Stream<List<Account>> watchAllAccounts() => _accountsDao.watchAllAccounts();
+  Stream<List<AccountEntity>> watchAllAccounts() {
+    return _accountsDao.watchAllAccounts().map(
+      (accounts) => accounts.map((a) => a.toEntity()).toList(),
+    );
+  }
 
   // Get active accounts
-  Future<List<Account>> getActiveAccounts() => _accountsDao.getActiveAccounts();
+  Future<List<AccountEntity>> getActiveAccounts() async {
+    final accounts = await _accountsDao.getActiveAccounts();
+    return accounts.map((a) => a.toEntity()).toList();
+  }
 
   // Get account by ID
-  Future<Account?> getAccountById(String id) => _accountsDao.getAccountById(id);
+  Future<AccountEntity?> getAccountById(String id) async {
+    final account = await _accountsDao.getAccountById(id);
+    return account?.toEntity();
+  }
 
   // Create account
   Future<String> createAccount({
@@ -32,40 +46,24 @@ class AccountRepository {
     String? icon,
   }) async {
     final id = _uuid.v4();
-    final account = AccountsCompanion(
-      id: Value(id),
-      name: Value(name),
-      balance: Value(balance),
-      type: Value(type),
-      color: Value(color),
-      icon: Value(icon),
-      isActive: const Value(true),
-      createdAt: Value(DateTime.now()),
+    final entity = AccountEntity(
+      id: id,
+      name: name,
+      balance: balance,
+      type: type,
+      color: color,
+      icon: icon,
+      isActive: true,
+      createdAt: DateTime.now(),
     );
-    await _accountsDao.insertAccount(account);
+
+    await _accountsDao.insertAccount(entity.toCompanion());
     return id;
   }
 
   // Update account
-  Future<bool> updateAccount({
-    required String id,
-    String? name,
-    double? balance,
-    AccountType? type,
-    String? color,
-    String? icon,
-    bool? isActive,
-  }) async {
-    final account = AccountsCompanion(
-      id: Value(id),
-      name: name != null ? Value(name) : const Value.absent(),
-      balance: balance != null ? Value(balance) : const Value.absent(),
-      type: type != null ? Value(type) : const Value.absent(),
-      color: color != null ? Value(color) : const Value.absent(),
-      icon: icon != null ? Value(icon) : const Value.absent(),
-      isActive: isActive != null ? Value(isActive) : const Value.absent(),
-    );
-    return await _accountsDao.updateAccount(account);
+  Future<bool> updateAccount(AccountEntity account) async {
+    return await _accountsDao.updateAccount(account.toCompanion());
   }
 
   // Delete account
@@ -73,6 +71,11 @@ class AccountRepository {
 
   // Update balance
   Future<bool> updateBalance(String id, double newBalance) async {
-    return await updateAccount(id: id, balance: newBalance);
+    final account = await getAccountById(id);
+    if (account != null) {
+      final updated = account.copyWith(balance: newBalance);
+      return await updateAccount(updated);
+    }
+    return false;
   }
 }
