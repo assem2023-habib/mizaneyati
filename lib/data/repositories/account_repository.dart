@@ -1,8 +1,10 @@
-import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/account_type.dart';
+import '../../core/errors/exceptions.dart';
+import '../../core/errors/failures.dart';
+import '../../core/utils/result.dart';
+import '../../core/utils/error_mapper.dart';
 import '../../domain/entities/account_entity.dart';
-import '../local/app_database.dart';
 import '../local/daos/accounts_dao.dart';
 import '../local/mappers/account_mapper.dart';
 
@@ -13,69 +15,174 @@ class AccountRepository {
   AccountRepository(this._accountsDao);
 
   // Get all accounts
-  Future<List<AccountEntity>> getAllAccounts() async {
-    final accounts = await _accountsDao.getAllAccounts();
-    return accounts.map((a) => a.toEntity()).toList();
+  Future<Result<List<AccountEntity>>> getAllAccounts() async {
+    try {
+      final accounts = await _accountsDao.getAllAccounts();
+      final entities = accounts.map((a) => a.toEntity()).toList();
+      return Success(entities);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Watch all accounts
-  Stream<List<AccountEntity>> watchAllAccounts() {
-    return _accountsDao.watchAllAccounts().map(
-      (accounts) => accounts.map((a) => a.toEntity()).toList(),
-    );
+  Stream<Result<List<AccountEntity>>> watchAllAccounts() {
+    try {
+      return _accountsDao.watchAllAccounts().map((accounts) {
+        try {
+          final entities = accounts.map((a) => a.toEntity()).toList();
+          return Success(entities);
+        } catch (e, stackTrace) {
+          return Fail<List<AccountEntity>>(mapDatabaseException(e, stackTrace));
+        }
+      });
+    } catch (e, stackTrace) {
+      return Stream.value(Fail(mapDatabaseException(e, stackTrace)));
+    }
   }
 
   // Get active accounts
-  Future<List<AccountEntity>> getActiveAccounts() async {
-    final accounts = await _accountsDao.getActiveAccounts();
-    return accounts.map((a) => a.toEntity()).toList();
+  Future<Result<List<AccountEntity>>> getActiveAccounts() async {
+    try {
+      final accounts = await _accountsDao.getActiveAccounts();
+      final entities = accounts.map((a) => a.toEntity()).toList();
+      return Success(entities);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Get account by ID
-  Future<AccountEntity?> getAccountById(String id) async {
-    final account = await _accountsDao.getAccountById(id);
-    return account?.toEntity();
+  Future<Result<AccountEntity>> getAccountById(String id) async {
+    try {
+      final account = await _accountsDao.getAccountById(id);
+      if (account == null) {
+        return const Fail(
+          NotFoundFailure('الحساب غير موجود', code: 'account_not_found'),
+        );
+      }
+      return Success(account.toEntity());
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Create account
-  Future<String> createAccount({
+  Future<Result<String>> createAccount({
     required String name,
     required double balance,
     required AccountType type,
     required String color,
     String? icon,
   }) async {
-    final id = _uuid.v4();
-    final entity = AccountEntity(
-      id: id,
-      name: name,
-      balance: balance,
-      type: type,
-      color: color,
-      icon: icon,
-      isActive: true,
-      createdAt: DateTime.now(),
-    );
+    try {
+      // Validation
+      if (name.trim().isEmpty) {
+        return const Fail(
+          ValidationFailure('اسم الحساب مطلوب', code: 'empty_name'),
+        );
+      }
 
-    await _accountsDao.insertAccount(entity.toCompanion());
-    return id;
+      if (balance < 0) {
+        return const Fail(
+          ValidationFailure(
+            'الرصيد لا يمكن أن يكون سالباً',
+            code: 'negative_balance',
+          ),
+        );
+      }
+
+      final id = _uuid.v4();
+      final entity = AccountEntity(
+        id: id,
+        name: name,
+        balance: balance,
+        type: type,
+        color: color,
+        icon: icon,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+
+      await _accountsDao.insertAccount(entity.toCompanion());
+      return Success(id);
+    } on ValidationException catch (e) {
+      return Fail(ValidationFailure(e.message, code: 'validation_error'));
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Update account
-  Future<bool> updateAccount(AccountEntity account) async {
-    return await _accountsDao.updateAccount(account.toCompanion());
+  Future<Result<bool>> updateAccount(AccountEntity account) async {
+    try {
+      // Validation
+      if (account.name.trim().isEmpty) {
+        return const Fail(
+          ValidationFailure('اسم الحساب مطلوب', code: 'empty_name'),
+        );
+      }
+
+      final result = await _accountsDao.updateAccount(account.toCompanion());
+      return Success(result);
+    } on ValidationException catch (e) {
+      return Fail(ValidationFailure(e.message, code: 'validation_error'));
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Delete account
-  Future<int> deleteAccount(String id) => _accountsDao.deleteAccount(id);
+  Future<Result<int>> deleteAccount(String id) async {
+    try {
+      final result = await _accountsDao.deleteAccount(id);
+      if (result == 0) {
+        return const Fail(
+          NotFoundFailure('الحساب غير موجود', code: 'account_not_found'),
+        );
+      }
+      return Success(result);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
+  }
 
   // Update balance
-  Future<bool> updateBalance(String id, double newBalance) async {
-    final account = await getAccountById(id);
-    if (account != null) {
+  Future<Result<bool>> updateBalance(String id, double newBalance) async {
+    try {
+      if (newBalance < 0) {
+        return const Fail(
+          ValidationFailure(
+            'الرصيد لا يمكن أن يكون سالباً',
+            code: 'negative_balance',
+          ),
+        );
+      }
+
+      final accountResult = await getAccountById(id);
+      if (accountResult is Fail) {
+        return Fail<bool>(accountResult.failure);
+      }
+
+      final account = (accountResult as Success<AccountEntity>).value;
       final updated = account.copyWith(balance: newBalance);
       return await updateAccount(updated);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
     }
-    return false;
   }
 }

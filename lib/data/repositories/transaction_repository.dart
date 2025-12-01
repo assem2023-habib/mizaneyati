@@ -1,7 +1,10 @@
 import 'package:uuid/uuid.dart';
 import '../../core/constants/transaction_type.dart';
+import '../../core/errors/exceptions.dart';
+import '../../core/errors/failures.dart';
+import '../../core/utils/result.dart';
+import '../../core/utils/error_mapper.dart';
 import '../../domain/entities/transaction_entity.dart';
-import '../../domain/entities/account_entity.dart';
 import '../local/daos/transactions_dao.dart';
 import '../local/daos/accounts_dao.dart';
 import '../local/mappers/transaction_mapper.dart';
@@ -15,32 +18,66 @@ class TransactionRepository {
   TransactionRepository(this._transactionsDao, this._accountsDao);
 
   // Get all transactions
-  Future<List<TransactionEntity>> getAllTransactions() async {
-    final transactions = await _transactionsDao.getAllTransactions();
-    return transactions.map((t) => t.toEntity()).toList();
+  Future<Result<List<TransactionEntity>>> getAllTransactions() async {
+    try {
+      final transactions = await _transactionsDao.getAllTransactions();
+      final entities = transactions.map((t) => t.toEntity()).toList();
+      return Success(entities);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Watch all transactions
-  Stream<List<TransactionEntity>> watchAllTransactions() {
-    return _transactionsDao.watchAllTransactions().map(
-      (transactions) => transactions.map((t) => t.toEntity()).toList(),
-    );
+  Stream<Result<List<TransactionEntity>>> watchAllTransactions() {
+    try {
+      return _transactionsDao.watchAllTransactions().map((transactions) {
+        try {
+          final entities = transactions.map((t) => t.toEntity()).toList();
+          return Success(entities);
+        } catch (e, stackTrace) {
+          return Fail<List<TransactionEntity>>(
+            mapDatabaseException(e, stackTrace),
+          );
+        }
+      });
+    } catch (e, stackTrace) {
+      return Stream.value(Fail(mapDatabaseException(e, stackTrace)));
+    }
   }
 
   // Get transactions by date range
-  Future<List<TransactionEntity>> getTransactionsByDateRange(
+  Future<Result<List<TransactionEntity>>> getTransactionsByDateRange(
     DateTime start,
     DateTime end,
   ) async {
-    final transactions = await _transactionsDao.getTransactionsByDateRange(
-      start,
-      end,
-    );
-    return transactions.map((t) => t.toEntity()).toList();
+    try {
+      if (start.isAfter(end)) {
+        return const Fail(
+          ValidationFailure(
+            'تاريخ البداية يجب أن يكون قبل تاريخ النهاية',
+            code: 'invalid_date_range',
+          ),
+        );
+      }
+
+      final transactions = await _transactionsDao.getTransactionsByDateRange(
+        start,
+        end,
+      );
+      final entities = transactions.map((t) => t.toEntity()).toList();
+      return Success(entities);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Create transaction with account balance update
-  Future<String> createTransaction({
+  Future<Result<String>> createTransaction({
     required double amount,
     required TransactionType type,
     required String categoryId,
@@ -49,65 +86,137 @@ class TransactionRepository {
     String? note,
     String? receiptPath,
   }) async {
-    final id = _uuid.v4();
+    try {
+      // Validation
+      if (amount <= 0) {
+        return const Fail(
+          ValidationFailure(
+            'المبلغ يجب أن يكون أكبر من صفر',
+            code: 'invalid_amount',
+          ),
+        );
+      }
 
-    final entity = TransactionEntity(
-      id: id,
-      amount: amount,
-      type: type,
-      categoryId: categoryId,
-      accountId: accountId,
-      date: date,
-      note: note,
-      receiptPath: receiptPath,
-      createdAt: DateTime.now(),
-    );
+      final id = _uuid.v4();
 
-    await _transactionsDao.insertTransaction(entity.toCompanion());
+      final entity = TransactionEntity(
+        id: id,
+        amount: amount,
+        type: type,
+        categoryId: categoryId,
+        accountId: accountId,
+        date: date,
+        note: note,
+        receiptPath: receiptPath,
+        createdAt: DateTime.now(),
+      );
 
-    // Update account balance
-    await _updateAccountBalance(accountId, amount, type);
+      await _transactionsDao.insertTransaction(entity.toCompanion());
 
-    return id;
+      // Update account balance
+      final balanceResult = await _updateAccountBalance(
+        accountId,
+        amount,
+        type,
+      );
+      if (balanceResult is Fail) {
+        // Rollback transaction if balance update fails
+        await _transactionsDao.deleteTransaction(id);
+        return Fail<String>((balanceResult as Fail).failure);
+      }
+
+      return Success(id);
+    } on ValidationException catch (e) {
+      return Fail(ValidationFailure(e.message, code: 'validation_error'));
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Update transaction
-  Future<bool> updateTransaction(TransactionEntity transaction) async {
-    return await _transactionsDao.updateTransaction(transaction.toCompanion());
+  Future<Result<bool>> updateTransaction(TransactionEntity transaction) async {
+    try {
+      // Validation
+      if (transaction.amount <= 0) {
+        return const Fail(
+          ValidationFailure(
+            'المبلغ يجب أن يكون أكبر من صفر',
+            code: 'invalid_amount',
+          ),
+        );
+      }
+
+      final result = await _transactionsDao.updateTransaction(
+        transaction.toCompanion(),
+      );
+      return Success(result);
+    } on ValidationException catch (e) {
+      return Fail(ValidationFailure(e.message, code: 'validation_error'));
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
+    }
   }
 
   // Delete transaction with account balance update
-  Future<int> deleteTransaction(String id) async {
-    // Get transaction first to update account balance
-    final transactions = await getAllTransactions();
-    final transaction = transactions.firstWhere((t) => t.id == id);
+  Future<Result<int>> deleteTransaction(String id) async {
+    try {
+      // Get transaction first to update account balance
+      final transactionsResult = await getAllTransactions();
+      if (transactionsResult is Fail) {
+        return Fail<int>((transactionsResult as Fail).failure);
+      }
 
-    // Delete transaction
-    final result = await _transactionsDao.deleteTransaction(id);
+      final transactions =
+          (transactionsResult as Success<List<TransactionEntity>>).value;
+      final transaction = transactions.where((t) => t.id == id).firstOrNull;
 
-    // Reverse the account balance change
-    if (result > 0) {
-      final reverseType = transaction.type == TransactionType.expense
-          ? TransactionType.income
-          : TransactionType.expense;
-      await _updateAccountBalance(
-        transaction.accountId,
-        transaction.amount,
-        reverseType,
-      );
+      if (transaction == null) {
+        return const Fail(
+          NotFoundFailure('العملية غير موجودة', code: 'transaction_not_found'),
+        );
+      }
+
+      // Delete transaction
+      final result = await _transactionsDao.deleteTransaction(id);
+
+      // Reverse the account balance change
+      if (result > 0) {
+        final reverseType = transaction.type == TransactionType.expense
+            ? TransactionType.income
+            : TransactionType.expense;
+        await _updateAccountBalance(
+          transaction.accountId,
+          transaction.amount,
+          reverseType,
+        );
+      }
+
+      return Success(result);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
     }
-
-    return result;
   }
 
   // Private helper to update account balance
-  Future<void> _updateAccountBalance(
+  Future<Result<void>> _updateAccountBalance(
     String accountId,
     double amount,
     TransactionType type,
   ) async {
-    final account = await _accountsDao.getAccountById(accountId);
-    if (account != null) {
+    try {
+      final account = await _accountsDao.getAccountById(accountId);
+      if (account == null) {
+        return const Fail(
+          NotFoundFailure('الحساب غير موجود', code: 'account_not_found'),
+        );
+      }
+
       final accountEntity = account.toEntity();
       double newBalance = accountEntity.balance;
 
@@ -117,8 +226,28 @@ class TransactionRepository {
         newBalance += amount;
       }
 
+      // Check for negative balance
+      if (newBalance < 0) {
+        return Fail(
+          ValidationFailure(
+            'الرصيد غير كافٍ',
+            code: 'insufficient_balance',
+            info: {
+              'currentBalance': accountEntity.balance,
+              'requiredAmount': amount,
+            },
+          ),
+        );
+      }
+
       final updatedAccount = accountEntity.copyWith(balance: newBalance);
       await _accountsDao.updateAccount(updatedAccount.toCompanion());
+
+      return const Success(null);
+    } on DatabaseException catch (e) {
+      return Fail(DatabaseFailure(e.message, code: 'db_error'));
+    } catch (e, stackTrace) {
+      return Fail(mapDatabaseException(e, stackTrace));
     }
   }
 }

@@ -5,9 +5,6 @@ export '../../core/constants/account_type.dart';
 export '../../core/constants/category_type.dart';
 export '../../core/constants/transaction_type.dart';
 
-import '../../core/constants/account_type.dart';
-import '../../core/constants/category_type.dart';
-import '../../core/constants/transaction_type.dart';
 import 'type_converters.dart';
 
 class Accounts extends Table {
