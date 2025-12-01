@@ -122,7 +122,7 @@ class TransactionRepository {
       if (balanceResult is Fail) {
         // Rollback transaction if balance update fails
         await _transactionsDao.deleteTransaction(id);
-        return Fail<String>((balanceResult as Fail).failure);
+        return Fail<String>((balanceResult).failure);
       }
 
       return Success(id);

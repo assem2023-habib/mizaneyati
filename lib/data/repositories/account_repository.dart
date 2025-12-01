@@ -173,7 +173,7 @@ class AccountRepository {
 
       final accountResult = await getAccountById(id);
       if (accountResult is Fail) {
-        return Fail<bool>(accountResult.failure);
+        return Fail<bool>((accountResult as Fail).failure);
       }
 
       final account = (accountResult as Success<AccountEntity>).value;
