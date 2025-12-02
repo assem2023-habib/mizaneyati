@@ -1,10 +1,10 @@
 import 'package:meta/meta.dart';
-import '../../core/constants/transaction_type.dart';
+import '../../domain/models/transaction_type.dart';
 
 @immutable
 class TransactionEntity {
   final String id;
-  final double amount;
+  final int amountMinor; // store as minor units
   final TransactionType type;
   final String categoryId;
   final String accountId;
@@ -15,7 +15,7 @@ class TransactionEntity {
 
   const TransactionEntity({
     required this.id,
-    required this.amount,
+    required this.amountMinor,
     required this.type,
     required this.categoryId,
     required this.accountId,
@@ -27,7 +27,7 @@ class TransactionEntity {
 
   TransactionEntity copyWith({
     String? id,
-    double? amount,
+    int? amountMinor,
     TransactionType? type,
     String? categoryId,
     String? accountId,
@@ -38,7 +38,7 @@ class TransactionEntity {
   }) {
     return TransactionEntity(
       id: id ?? this.id,
-      amount: amount ?? this.amount,
+      amountMinor: amountMinor ?? this.amountMinor,
       type: type ?? this.type,
       categoryId: categoryId ?? this.categoryId,
       accountId: accountId ?? this.accountId,
@@ -51,7 +51,7 @@ class TransactionEntity {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'amount': amount,
+    'amountMinor': amountMinor,
     'type': type.name,
     'categoryId': categoryId,
     'accountId': accountId,
@@ -66,7 +66,7 @@ class TransactionEntity {
       identical(this, other) ||
       other is TransactionEntity &&
           other.id == id &&
-          other.amount == amount &&
+          other.amountMinor == amountMinor &&
           other.type == type &&
           other.categoryId == categoryId &&
           other.accountId == accountId &&
@@ -76,14 +76,15 @@ class TransactionEntity {
           other.createdAt == createdAt;
 
   @override
-  int get hashCode =>
-      id.hashCode ^
-      amount.hashCode ^
-      type.hashCode ^
-      categoryId.hashCode ^
-      accountId.hashCode ^
-      date.hashCode ^
-      (note?.hashCode ?? 0) ^
-      (receiptPath?.hashCode ?? 0) ^
-      createdAt.hashCode;
+  int get hashCode => Object.hash(
+    id,
+    amountMinor,
+    type,
+    categoryId,
+    accountId,
+    date,
+    note,
+    receiptPath,
+    createdAt,
+  );
 }

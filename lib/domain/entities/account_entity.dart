@@ -1,11 +1,11 @@
 import 'package:meta/meta.dart';
-import '../../core/constants/account_type.dart';
+import '../../domain/models/account_type.dart';
 
 @immutable
 class AccountEntity {
   final String id;
   final String name;
-  final double balance;
+  final int balanceMinor; // store amount in minor units (e.g. qruush)
   final AccountType type;
   final String color;
   final String? icon;
@@ -15,7 +15,7 @@ class AccountEntity {
   const AccountEntity({
     required this.id,
     required this.name,
-    required this.balance,
+    required this.balanceMinor,
     required this.type,
     required this.color,
     this.icon,
@@ -26,7 +26,7 @@ class AccountEntity {
   AccountEntity copyWith({
     String? id,
     String? name,
-    double? balance,
+    int? balanceMinor,
     AccountType? type,
     String? color,
     String? icon,
@@ -36,7 +36,7 @@ class AccountEntity {
     return AccountEntity(
       id: id ?? this.id,
       name: name ?? this.name,
-      balance: balance ?? this.balance,
+      balanceMinor: balanceMinor ?? this.balanceMinor,
       type: type ?? this.type,
       color: color ?? this.color,
       icon: icon ?? this.icon,
@@ -48,7 +48,7 @@ class AccountEntity {
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-    'balance': balance,
+    'balanceMinor': balanceMinor,
     'type': type.name,
     'color': color,
     'icon': icon,
@@ -62,7 +62,7 @@ class AccountEntity {
       other is AccountEntity &&
           other.id == id &&
           other.name == name &&
-          other.balance == balance &&
+          other.balanceMinor == balanceMinor &&
           other.type == type &&
           other.color == color &&
           other.icon == icon &&
@@ -70,13 +70,14 @@ class AccountEntity {
           other.createdAt == createdAt;
 
   @override
-  int get hashCode =>
-      id.hashCode ^
-      name.hashCode ^
-      balance.hashCode ^
-      type.hashCode ^
-      color.hashCode ^
-      (icon?.hashCode ?? 0) ^
-      isActive.hashCode ^
-      createdAt.hashCode;
+  int get hashCode => Object.hash(
+    id,
+    name,
+    balanceMinor,
+    type,
+    color,
+    icon,
+    isActive,
+    createdAt,
+  );
 }

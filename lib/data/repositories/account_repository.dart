@@ -1,5 +1,5 @@
 import 'package:uuid/uuid.dart';
-import '../../core/constants/account_type.dart';
+import '../../domain/models/account_type.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/result.dart';
@@ -102,7 +102,7 @@ class AccountRepository {
       final entity = AccountEntity(
         id: id,
         name: name,
-        balance: balance,
+        balanceMinor: (balance * 100).toInt(), // Convert to minor units
         type: type,
         color: color,
         icon: icon,
@@ -177,7 +177,9 @@ class AccountRepository {
       }
 
       final account = (accountResult as Success<AccountEntity>).value;
-      final updated = account.copyWith(balance: newBalance);
+      final updated = account.copyWith(
+        balanceMinor: (newBalance * 100).toInt(),
+      );
       return await updateAccount(updated);
     } on DatabaseException catch (e) {
       return Fail(DatabaseFailure(e.message, code: 'db_error'));

@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 class BudgetEntity {
   final String id;
   final String categoryId;
-  final double limitAmount;
+  final int limitAmountMinor;
   final DateTime startDate;
   final DateTime endDate;
   final bool isActive;
@@ -12,16 +12,16 @@ class BudgetEntity {
   const BudgetEntity({
     required this.id,
     required this.categoryId,
-    required this.limitAmount,
+    required this.limitAmountMinor,
     required this.startDate,
     required this.endDate,
-    required this.isActive,
+    this.isActive = true,
   });
 
   BudgetEntity copyWith({
     String? id,
     String? categoryId,
-    double? limitAmount,
+    int? limitAmountMinor,
     DateTime? startDate,
     DateTime? endDate,
     bool? isActive,
@@ -29,7 +29,7 @@ class BudgetEntity {
     return BudgetEntity(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
-      limitAmount: limitAmount ?? this.limitAmount,
+      limitAmountMinor: limitAmountMinor ?? this.limitAmountMinor,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       isActive: isActive ?? this.isActive,
@@ -39,7 +39,7 @@ class BudgetEntity {
   Map<String, dynamic> toJson() => {
     'id': id,
     'categoryId': categoryId,
-    'limitAmount': limitAmount,
+    'limitAmountMinor': limitAmountMinor,
     'startDate': startDate.toIso8601String(),
     'endDate': endDate.toIso8601String(),
     'isActive': isActive,
@@ -51,17 +51,18 @@ class BudgetEntity {
       other is BudgetEntity &&
           other.id == id &&
           other.categoryId == categoryId &&
-          other.limitAmount == limitAmount &&
+          other.limitAmountMinor == limitAmountMinor &&
           other.startDate == startDate &&
           other.endDate == endDate &&
           other.isActive == isActive;
 
   @override
-  int get hashCode =>
-      id.hashCode ^
-      categoryId.hashCode ^
-      limitAmount.hashCode ^
-      startDate.hashCode ^
-      endDate.hashCode ^
-      isActive.hashCode;
+  int get hashCode => Object.hash(
+    id,
+    categoryId,
+    limitAmountMinor,
+    startDate,
+    endDate,
+    isActive,
+  );
 }

@@ -73,7 +73,7 @@ class BudgetRepository {
       final entity = BudgetEntity(
         id: id,
         categoryId: categoryId,
-        limitAmount: limitAmount,
+        limitAmountMinor: (limitAmount * 100).toInt(), // Convert to minor units
         startDate: startDate,
         endDate: endDate,
         isActive: true,
@@ -94,7 +94,7 @@ class BudgetRepository {
   Future<Result<bool>> updateBudget(BudgetEntity budget) async {
     try {
       // Validation
-      if (budget.limitAmount <= 0) {
+      if (budget.limitAmountMinor <= 0) {
         return const Fail(
           ValidationFailure(
             'حد الميزانية يجب أن يكون أكبر من صفر',

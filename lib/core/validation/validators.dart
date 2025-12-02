@@ -2,8 +2,8 @@
 
 import '../errors/failures.dart';
 import '../utils/result.dart';
-import '../../core/constants/transaction_type.dart';
-import '../../core/constants/category_type.dart';
+import '../../domain/models/transaction_type.dart';
+import '../../domain/models/category_type.dart';
 
 /// Type alias for validation results
 typedef ValidationResult = Result<void>;

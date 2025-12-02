@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import '../../../domain/entities/account_entity.dart';
-import '../../../core/constants/account_type.dart';
 import '../app_database.dart';
 
 extension AccountMapper on Account {
@@ -8,8 +7,9 @@ extension AccountMapper on Account {
     return AccountEntity(
       id: id,
       name: name,
-      balance: balance,
-      type: AccountType.values.firstWhere((e) => e.name == type),
+      balanceMinor: (balance * 100)
+          .toInt(), // DB stores as double (Lira), convert to minor units (qruush)
+      type: type, // type is already AccountType from DB
       color: color,
       icon: icon,
       isActive: isActive,
@@ -23,7 +23,7 @@ extension AccountEntityMapper on AccountEntity {
     return AccountsCompanion(
       id: Value(id),
       name: Value(name),
-      balance: Value(balance),
+      balance: Value(balanceMinor / 100.0), // Convert minor units back to Lira
       type: Value(type),
       color: Value(color),
       icon: Value(icon),

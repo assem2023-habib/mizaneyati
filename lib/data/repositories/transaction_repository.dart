@@ -1,5 +1,5 @@
 import 'package:uuid/uuid.dart';
-import '../../core/constants/transaction_type.dart';
+import '../../domain/models/transaction_type.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/result.dart';
@@ -101,7 +101,7 @@ class TransactionRepository {
 
       final entity = TransactionEntity(
         id: id,
-        amount: amount,
+        amountMinor: (amount * 100).toInt(), // Convert to minor units
         type: type,
         categoryId: categoryId,
         accountId: accountId,
@@ -139,7 +139,7 @@ class TransactionRepository {
   Future<Result<bool>> updateTransaction(TransactionEntity transaction) async {
     try {
       // Validation
-      if (transaction.amount <= 0) {
+      if (transaction.amountMinor <= 0) {
         return const Fail(
           ValidationFailure(
             'المبلغ يجب أن يكون أكبر من صفر',
@@ -190,7 +190,7 @@ class TransactionRepository {
             : TransactionType.expense;
         await _updateAccountBalance(
           transaction.accountId,
-          transaction.amount,
+          transaction.amountMinor / 100.0, // Convert back to main units
           reverseType,
         );
       }
@@ -218,7 +218,8 @@ class TransactionRepository {
       }
 
       final accountEntity = account.toEntity();
-      double newBalance = accountEntity.balance;
+      double newBalance =
+          accountEntity.balanceMinor / 100.0; // Convert to main units
 
       if (type == TransactionType.expense) {
         newBalance -= amount;
@@ -233,14 +234,16 @@ class TransactionRepository {
             'الرصيد غير كافٍ',
             code: 'insufficient_balance',
             info: {
-              'currentBalance': accountEntity.balance,
+              'currentBalance': accountEntity.balanceMinor / 100.0,
               'requiredAmount': amount,
             },
           ),
         );
       }
 
-      final updatedAccount = accountEntity.copyWith(balance: newBalance);
+      final updatedAccount = accountEntity.copyWith(
+        balanceMinor: (newBalance * 100).toInt(),
+      );
       await _accountsDao.updateAccount(updatedAccount.toCompanion());
 
       return const Success(null);

@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import '../../../domain/entities/category_entity.dart';
-import '../../../core/constants/category_type.dart';
 import '../app_database.dart';
 
 extension CategoryMapper on Category {
@@ -10,7 +9,7 @@ extension CategoryMapper on Category {
       name: name,
       icon: icon,
       color: color,
-      type: CategoryType.values.firstWhere((e) => e.name == type),
+      type: type, // type is already CategoryType from DB
     );
   }
 }

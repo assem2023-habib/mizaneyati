@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
-import '../../core/constants/category_type.dart';
+import '../../domain/models/category_type.dart';
 
 @immutable
 class CategoryEntity {
@@ -52,10 +52,5 @@ class CategoryEntity {
           other.type == type;
 
   @override
-  int get hashCode =>
-      id.hashCode ^
-      name.hashCode ^
-      icon.hashCode ^
-      color.hashCode ^
-      type.hashCode;
+  int get hashCode => Object.hash(id, name, icon, color, type);
 }

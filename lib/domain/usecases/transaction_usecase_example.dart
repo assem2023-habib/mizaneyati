@@ -3,13 +3,12 @@
 // هذا مثال توضيحي لكيفية استخدام Validators في UseCase
 // يمكنك نسخ هذا النمط واستخدامه في UseCases الحقيقية
 
-import '../../core/errors/failures.dart';
 import '../../core/utils/result.dart';
 import '../../core/validation/validators.dart';
-import '../../core/constants/transaction_type.dart';
+import '../../domain/models/transaction_type.dart';
+import '../../domain/models/account_type.dart';
 import '../entities/transaction_entity.dart';
 import '../entities/account_entity.dart';
-import '../entities/category_entity.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/category_repository.dart';
@@ -23,42 +22,31 @@ import '../../data/repositories/category_repository.dart';
 class CreateTransactionUseCase {
   final TransactionRepository _transactionRepo;
   final AccountRepository _accountRepo;
-  final CategoryRepository _categoryRepo;
 
-  CreateTransactionUseCase(
-    this._transactionRepo,
-    this._accountRepo,
-    this._categoryRepo,
-  );
+  CreateTransactionUseCase(this._transactionRepo, this._accountRepo);
 
   /// تنفيذ UseCase لإنشاء معاملة جديدة
-  ///
-  /// الخطوات:
-  /// 1. التحقق من صحة البيانات الأساسية (المبلغ، التاريخ)
-  /// 2. التحقق من وجود وحالة الحساب
-  /// 3. التحقق من وجود وتطابق الفئة (للدخل والمصروفات)
-  /// 4. التحقق الخاص بالتحويلات
-  /// 5. إنشاء المعاملة في قاعدة البيانات
   Future<Result<String>> execute(TransactionEntity transaction) async {
-    // 1. التحقق من المبلغ
-    final amountValidation = Validators.validateAmount(transaction.amount);
-    if (amountValidation is Fail) {
-      // تحويل Result<void> إلى Result<String>
-      return Fail((amountValidation as Fail).failure);
+    // 1. التحقق من المبلغ (convert minor to main units for validation)
+    final amountValidation = Validators.validateAmount(
+      transaction.amountMinor / 100.0,
+    );
+    if (amountValidation case Fail(:final failure)) {
+      return Fail(failure);
     }
 
     // 2. التحقق من التاريخ
     final dateValidation = Validators.validateNotFutureDate(transaction.date);
-    if (dateValidation is Fail) {
-      return Fail((dateValidation as Fail).failure);
+    if (dateValidation case Fail(:final failure)) {
+      return Fail(failure);
     }
 
     // 3. التحقق من الحساب
     final accountResult = await _accountRepo.getAccountById(
       transaction.accountId,
     );
-    if (accountResult is Fail) {
-      return Fail((accountResult as Fail).failure);
+    if (accountResult case Fail(:final failure)) {
+      return Fail(failure);
     }
 
     final account = (accountResult as Success<AccountEntity>).value;
@@ -66,41 +54,18 @@ class CreateTransactionUseCase {
       account.isActive,
       accountId: account.id,
     );
-    if (accountActiveValidation is Fail) {
-      return Fail((accountActiveValidation as Fail).failure);
+    if (accountActiveValidation case Fail(:final failure)) {
+      return Fail(failure);
     }
 
-    // 4. التحقق من الفئة (للدخل والمصروفات فقط)
-    if (transaction.type != TransactionType.transfer) {
-      final categoryResult = await _categoryRepo.getCategoryById(
-        transaction.categoryId,
-      );
-      if (categoryResult is Fail) {
-        return Fail((categoryResult as Fail).failure);
-      }
-
-      final category = (categoryResult as Success<CategoryEntity>).value;
-      final categoryValidation = Validators.validateCategoryForTransaction(
-        transaction.type,
-        category.type,
-        categoryId: category.id,
-      );
-      if (categoryValidation is Fail) {
-        return Fail((categoryValidation as Fail).failure);
-      }
-    }
-
-    // 5. التحقق الخاص بالتحويلات
+    // 4. التحقق الخاص بالتحويلات
     if (transaction.type == TransactionType.transfer) {
-      // في حالة التحويل، يجب تحديد الحساب الوجهة
-      // (افترض أن note تحتوي على targetAccountId مؤقتاً)
       final transferValidation = Validators.validateTransfer(
         fromAccountId: transaction.accountId,
-        toAccountId:
-            transaction.note, // في التطبيق الحقيقي، ستكون هناك خاصية منفصلة
+        toAccountId: transaction.note,
       );
-      if (transferValidation is Fail) {
-        return Fail((transferValidation as Fail).failure);
+      if (transferValidation case Fail(:final failure)) {
+        return Fail(failure);
       }
 
       // التحقق من أن الحساب الوجهة موجود ونشط
@@ -108,8 +73,8 @@ class CreateTransactionUseCase {
         final targetAccountResult = await _accountRepo.getAccountById(
           transaction.note!,
         );
-        if (targetAccountResult is Fail) {
-          return Fail((targetAccountResult as Fail).failure);
+        if (targetAccountResult case Fail(:final failure)) {
+          return Fail(failure);
         }
 
         final targetAccount =
@@ -118,46 +83,48 @@ class CreateTransactionUseCase {
           targetAccount.isActive,
           accountId: targetAccount.id,
         );
-        if (targetActiveValidation is Fail) {
-          return Fail((targetActiveValidation as Fail).failure);
+        if (targetActiveValidation case Fail(:final failure)) {
+          return Fail(failure);
         }
       }
     }
 
-    // 6. جميع التحققات نجحت - إنشاء المعاملة
-    return await _transactionRepo.createTransaction(transaction);
+    // 5. جميع التحققات نجحت - إنشاء المعاملة
+    return await _transactionRepo.createTransaction(
+      amount: transaction.amountMinor / 100.0, // Convert minor to main units
+      type: transaction.type,
+      categoryId: transaction.categoryId,
+      accountId: transaction.accountId,
+      date: transaction.date,
+      note: transaction.note,
+      receiptPath: transaction.receiptPath,
+    );
   }
 }
 
-/// مثال على UseCase لحذف فئة مع التحقق
-///
-/// ملاحظة: هذا مثال مبسط. في التطبيق الحقيقي، ستحتاج لإضافة
-/// دالة getTransactionsByCategory في TransactionRepository
+/// مثال مبسط على UseCase لحذف فئة مع التحقق
 class DeleteCategoryUseCase {
   final CategoryRepository _categoryRepo;
-  // final TransactionRepository _transactionRepo; // سيتم استخدامه عند توفر الدالة
 
   DeleteCategoryUseCase(this._categoryRepo);
 
-  Future<Result<bool>> execute(String categoryId) async {
-    // 1. التحقق من وجود الفئة
-    final categoryResult = await _categoryRepo.getCategoryById(categoryId);
-    if (categoryResult is Fail) {
-      return Fail((categoryResult as Fail).failure);
+  Future<Result<int>> execute(String categoryId) async {
+    // التحقق من إمكانية الحذف (افترض 0 معاملات للتوضيح)
+    const transactionsCount = 0;
+
+    final canDeleteValidation = Validators.canDeleteCategory(transactionsCount);
+    if (canDeleteValidation case Fail(:final failure)) {
+      return Fail(failure);
     }
 
-    // 2. حذف الفئة
+    // حذف الفئة
     return await _categoryRepo.deleteCategory(categoryId);
   }
 }
 
-/// مثال على UseCase لحذف حساب مع التحقق
-///
-/// ملاحظة: هذا مثال مبسط. في التطبيق الحقيقي، ستحتاج لإضافة
-/// دالة getTransactionsByAccount في TransactionRepository
+/// مثال مبسط على UseCase لحذف حساب مع التحقق
 class DeleteAccountUseCase {
   final AccountRepository _accountRepo;
-  // final TransactionRepository _transactionRepo; // سيتم استخدامه عند توفر الدالة
 
   DeleteAccountUseCase(this._accountRepo);
 
@@ -167,35 +134,90 @@ class DeleteAccountUseCase {
   }) async {
     // 1. التحقق من وجود الحساب
     final accountResult = await _accountRepo.getAccountById(accountId);
-    if (accountResult is Fail) {
-      return Fail((accountResult as Fail).failure);
+    if (accountResult case Fail(:final failure)) {
+      return Fail(failure);
     }
 
     final account = (accountResult as Success<AccountEntity>).value;
 
-    // 2. عد المعاملات المرتبطة بهذا الحساب
-    // ملاحظة: ستحتاج لإضافة هذه الدالة في TransactionRepository:
-    // Future<Result<List<TransactionEntity>>> getTransactionsByAccount(String accountId)
+    // 2. التحقق من إمكانية الحذف (افترض 0 معاملات للتوضيح)
+    const transactionsCount = 0;
 
-    // مثال مبسط - افترض عدد المعاملات = 0 للتوضيح فقط
-    const transactionsCount = 0; // في الواقع، استدعي الـ repository
-
-    // 3. التحقق من إمكانية الحذف
     final canDeleteValidation = Validators.canDeleteAccount(
       transactionsCount: transactionsCount,
-      balance: account.balance,
+      balance: account.balanceMinor / 100.0, // Convert minor to main units
       requireZeroBalance: requireZeroBalance,
     );
-    if (canDeleteValidation is Fail) {
-      return Fail((canDeleteValidation as Fail).failure);
+    if (canDeleteValidation case Fail(:final failure)) {
+      return Fail(failure);
     }
 
-    // 4. حذف الحساب
+    // 3. حذف الحساب
     final deleteResult = await _accountRepo.deleteAccount(accountId);
-    if (deleteResult is Fail) {
-      return Fail((deleteResult as Fail).failure);
+    if (deleteResult case Fail(:final failure)) {
+      return Fail(failure);
     }
 
     return const Success(true);
+  }
+}
+
+/// مثال على UseCase لتحديث رصيد حساب مع التحقق
+class UpdateAccountBalanceUseCase {
+  final AccountRepository _accountRepo;
+
+  UpdateAccountBalanceUseCase(this._accountRepo);
+
+  Future<Result<bool>> execute(String accountId, double newBalance) async {
+    // التحقق من الرصيد
+    final balanceValidation = Validators.validateNonNegativeBalance(newBalance);
+    if (balanceValidation case Fail(:final failure)) {
+      return Fail(failure);
+    }
+
+    // تحديث الرصيد
+    return await _accountRepo.updateBalance(accountId, newBalance);
+  }
+}
+
+/// مثال على UseCase لإنشاء حساب جديد مع التحقق
+class CreateAccountUseCase {
+  final AccountRepository _accountRepo;
+
+  CreateAccountUseCase(this._accountRepo);
+
+  Future<Result<String>> execute({
+    required String name,
+    required double balance,
+    required String type,
+    required String color,
+    String? icon,
+  }) async {
+    // 1. التحقق من الاسم
+    final nameValidation = Validators.validateAccountName(name);
+    if (nameValidation case Fail(:final failure)) {
+      return Fail(failure);
+    }
+
+    // 2. التحقق من الرصيد
+    final balanceValidation = Validators.validateNonNegativeBalance(balance);
+    if (balanceValidation case Fail(:final failure)) {
+      return Fail(failure);
+    }
+
+    // 3. إنشاء الحساب
+    // تحويل النص إلى Enum
+    final accountType = AccountType.values.firstWhere(
+      (t) => t.name == type,
+      orElse: () => AccountType.cash,
+    );
+
+    return await _accountRepo.createAccount(
+      name: name,
+      balance: balance,
+      type: accountType,
+      color: color,
+      icon: icon,
+    );
   }
 }

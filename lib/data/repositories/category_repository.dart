@@ -1,5 +1,5 @@
 import 'package:uuid/uuid.dart';
-import '../../core/constants/category_type.dart';
+import '../../domain/models/category_type.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/result.dart';
