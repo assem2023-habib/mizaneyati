@@ -1,14 +1,16 @@
 // lib/domain/usecases/transaction/add_transaction_usecase.dart
 import 'package:uuid/uuid.dart';
-import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
-import '../entities/transaction_entity.dart';
-import '../models/transaction_type.dart';
-import '../repositories/transaction_repository.dart';
-import '../repositories/account_repository.dart';
-import '../repositories/category_repository.dart';
-import '../validation/transaction_validator.dart';
-import '../validation/account_validator.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
+import '../../entities/transaction_entity.dart';
+import '../../models/transaction_type.dart';
+import '../../models/category_type.dart';
+import '../../repositories/transaction_repository.dart';
+import '../../repositories/account_repository.dart';
+import '../../repositories/category_repository.dart';
+import '../../value_objects/money.dart';
+import '../../value_objects/date_value.dart';
+import '../../value_objects/note_value.dart';
 
 class AddTransactionUseCase {
   final TransactionRepository _txRepo;
@@ -26,87 +28,98 @@ class AddTransactionUseCase {
     required DateTime date,
     String? note,
     String? receiptPath,
-    String? toAccountId, // Required for transfer
+    String? toAccountId,
   }) async {
-    // 1. Basic Validation
-    final vAmount = TransactionValidator.validateAmount(amountMinor);
-    if (vAmount is Fail) return vAmount;
+    // 1. Create Value Objects (Validation)
+    final amountResult = Money.create(amountMinor);
+    if (amountResult is Fail) return Fail((amountResult as Fail).failure);
 
-    final vDate = TransactionValidator.validateNotFutureDate(date);
-    if (vDate is Fail) return vDate;
+    final dateResult = DateValue.create(date);
+    if (dateResult is Fail) return Fail((dateResult as Fail).failure);
 
-    final vNote = TransactionValidator.validateNote(note);
-    if (vNote is Fail) return vNote;
+    final noteResult = NoteValue.create(note);
+    if (noteResult is Fail) return Fail((noteResult as Fail).failure);
 
-    if (type == TransactionType.transfer) {
-      final vTransfer = TransactionValidator.validateTransferAccounts(
-        fromAccountId: accountId,
-        toAccountId: toAccountId,
+    // 2. Business Validation
+    if (type == TransactionType.transfer &&
+        (toAccountId == null || toAccountId == accountId)) {
+      return const Fail(
+        ValidationFailure(
+          'Transfer requires valid distinct destination account',
+          code: 'invalid_transfer',
+        ),
       );
-      if (vTransfer is Fail) return vTransfer;
     }
-
-    // 2. Existence & State Checks (Async)
 
     // Check Source Account
     final accRes = await _accountRepo.getById(accountId);
-    if (accRes is Fail) return accRes;
+    if (accRes is Fail) return Fail((accRes as Fail).failure);
     final account = (accRes as Success).value;
 
-    final vAccActive = AccountValidator.validateAccountActive(
-      account.isActive,
-      accountId: accountId,
-    );
-    if (vAccActive is Fail) return vAccActive;
-
-    // For expense/transfer, check sufficient balance
-    if (type == TransactionType.expense || type == TransactionType.transfer) {
-      final vBalance = AccountValidator.validateSufficientBalance(
-        currentBalanceMinor: account.balanceMinor,
-        requiredAmountMinor: amountMinor,
-        accountId: accountId,
+    if (!account.isActive) {
+      return const Fail(
+        ValidationFailure('Account is not active', code: 'account_inactive'),
       );
-      if (vBalance is Fail) return vBalance;
     }
 
-    // Check Category (not needed for transfer if we treat transfers as category-less or specific category)
-    // Assuming transfers might use a system category or null, but here we require categoryId for all.
-    // If your logic allows null category for transfer, adjust accordingly.
-    // Based on your requirements: "validateCategoryMatches"
+    // Check balance for expense/transfer
+    if (type == TransactionType.expense || type == TransactionType.transfer) {
+      if (account.balance.minorUnits < amountMinor) {
+        return const Fail(
+          ValidationFailure(
+            'Insufficient balance',
+            code: 'insufficient_balance',
+          ),
+        );
+      }
+    }
 
+    // Check Category
     final catRes = await _categoryRepo.getById(categoryId);
-    if (catRes is Fail) return catRes;
+    if (catRes is Fail) return Fail((catRes as Fail).failure);
     final category = (catRes as Success).value;
 
-    final vCatMatch = TransactionValidator.validateCategoryForTransaction(
-      type,
-      category.type,
-    );
-    if (vCatMatch is Fail) return vCatMatch;
+    // Validate category type matches transaction type (not applicable for transfer)
+    if (type != TransactionType.transfer) {
+      final expectedCategoryType = type == TransactionType.income
+          ? CategoryType.income
+          : CategoryType.expense;
+      if (category.type != expectedCategoryType) {
+        return const Fail(
+          ValidationFailure(
+            'Category type does not match transaction type',
+            code: 'category_type_mismatch',
+          ),
+        );
+      }
+    }
 
     // Check Destination Account (for Transfer)
     if (type == TransactionType.transfer && toAccountId != null) {
       final toAccRes = await _accountRepo.getById(toAccountId);
-      if (toAccRes is Fail) return toAccRes;
+      if (toAccRes is Fail) return Fail((toAccRes as Fail).failure);
       final toAccount = (toAccRes as Success).value;
 
-      final vToAccActive = AccountValidator.validateAccountActive(
-        toAccount.isActive,
-        accountId: toAccountId,
-      );
-      if (vToAccActive is Fail) return vToAccActive;
+      if (!toAccount.isActive) {
+        return const Fail(
+          ValidationFailure(
+            'Destination account is not active',
+            code: 'to_account_inactive',
+          ),
+        );
+      }
     }
 
     // 3. Build Entity
     final txId = _uuid.v4();
     final txEntity = TransactionEntity(
       id: txId,
-      amountMinor: amountMinor,
+      amount: (amountResult as Success<Money>).value,
       type: type,
       categoryId: categoryId,
       accountId: accountId,
-      date: date,
-      note: note,
+      date: (dateResult as Success<DateValue>).value,
+      note: (noteResult as Success<NoteValue>).value,
       receiptPath: receiptPath,
       createdAt: DateTime.now(),
     );

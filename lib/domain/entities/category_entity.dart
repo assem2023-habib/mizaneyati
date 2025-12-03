@@ -1,12 +1,16 @@
+// lib/domain/entities/category_entity.dart
 import 'package:meta/meta.dart';
 import '../../domain/models/category_type.dart';
+import '../value_objects/category_name.dart';
+import '../value_objects/icon_value.dart';
+import '../value_objects/color_value.dart';
 
 @immutable
 class CategoryEntity {
   final String id;
-  final String name;
-  final String icon;
-  final String color;
+  final CategoryName name;
+  final IconValue icon;
+  final ColorValue color;
   final CategoryType type;
 
   const CategoryEntity({
@@ -19,9 +23,9 @@ class CategoryEntity {
 
   CategoryEntity copyWith({
     String? id,
-    String? name,
-    String? icon,
-    String? color,
+    CategoryName? name,
+    IconValue? icon,
+    ColorValue? color,
     CategoryType? type,
   }) {
     return CategoryEntity(
@@ -32,14 +36,6 @@ class CategoryEntity {
       type: type ?? this.type,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'icon': icon,
-    'color': color,
-    'type': type.name,
-  };
 
   @override
   bool operator ==(Object other) =>

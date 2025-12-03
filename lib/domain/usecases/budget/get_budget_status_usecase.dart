@@ -1,7 +1,7 @@
 // lib/domain/usecases/budget/get_budget_status_usecase.dart
-import '../../core/utils/result.dart';
-import '../entities/budget_entity.dart';
-import '../repositories/budget_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../entities/budget_entity.dart';
+import '../../repositories/budget_repository.dart';
 
 class BudgetStatus {
   final BudgetEntity budget;
@@ -30,15 +30,16 @@ class GetBudgetStatusUseCase {
     if (budgetRes is Fail) return Fail((budgetRes as Fail).failure);
     final budget = (budgetRes as Success<BudgetEntity>).value;
 
-    // 2. Calculate Spent
+    // 2. Calculate Spent Amount (using correct method name)
     final spentRes = await _budgetRepo.calculateSpentForBudget(budgetId);
     if (spentRes is Fail) return Fail((spentRes as Fail).failure);
     final spentMinor = (spentRes as Success<int>).value;
 
     // 3. Calculate Status
-    final remainingMinor = budget.amountMinor - spentMinor;
-    final progress = spentMinor / budget.amountMinor;
-    final isExceeded = spentMinor > budget.amountMinor;
+    final limitMinor = budget.limitAmount.minorUnits;
+    final remainingMinor = limitMinor - spentMinor;
+    final progress = limitMinor > 0 ? spentMinor / limitMinor : 0.0;
+    final isExceeded = spentMinor > limitMinor;
 
     return Success(
       BudgetStatus(

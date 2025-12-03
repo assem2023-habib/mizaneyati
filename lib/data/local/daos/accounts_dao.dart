@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import '../app_database.dart';
-import '../tables.dart';
+import '../db/app_database.dart';
+import '../db/tables.dart';
 
 part 'accounts_dao.g.dart';
 

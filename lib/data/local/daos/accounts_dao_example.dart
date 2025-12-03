@@ -4,8 +4,8 @@
 // يمكنك نسخ هذا النمط واستخدامه في DAOs الموجودة
 
 import 'package:drift/drift.dart';
-import '../app_database.dart';
-import '../tables.dart';
+import '../db/app_database.dart';
+import '../db/tables.dart';
 import '../../../core/logging/db_logger.dart';
 
 /// مثال على DAO مع تكامل DbLogger

@@ -6,10 +6,10 @@ import 'package:path/path.dart' as p;
 
 import 'tables.dart';
 import 'type_converters.dart';
-import 'daos/accounts_dao.dart';
-import 'daos/categories_dao.dart';
-import 'daos/transactions_dao.dart';
-import 'daos/budgets_dao.dart';
+import '../daos/accounts_dao.dart';
+import '../daos/categories_dao.dart';
+import '../daos/transactions_dao.dart';
+import '../daos/budgets_dao.dart';
 
 part 'app_database.g.dart';
 

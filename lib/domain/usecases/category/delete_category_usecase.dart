@@ -1,8 +1,7 @@
 // lib/domain/usecases/category/delete_category_usecase.dart
-import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
-import '../repositories/category_repository.dart';
-import '../validation/category_validator.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
+import '../../repositories/category_repository.dart';
 
 class DeleteCategoryUseCase {
   final CategoryRepository _categoryRepo;
@@ -16,10 +15,14 @@ class DeleteCategoryUseCase {
     final count = (countRes as Success).value;
 
     // 2. Validate Deletion
-    final vDelete = CategoryValidator.canDeleteCategory(
-      transactionsCount: count,
-    );
-    if (vDelete is Fail) return vDelete;
+    if (count > 0) {
+      return const Fail(
+        ValidationFailure(
+          'Cannot delete category with existing transactions',
+          code: 'category_has_transactions',
+        ),
+      );
+    }
 
     // 3. Delete
     return await _categoryRepo.delete(categoryId);

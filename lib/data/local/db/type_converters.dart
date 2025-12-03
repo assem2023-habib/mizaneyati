@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import '../../domain/models/account_type.dart';
-import '../../domain/models/category_type.dart';
-import '../../domain/models/transaction_type.dart';
+import '../../../domain/models/account_type.dart';
+import '../../../domain/models/category_type.dart';
+import '../../../domain/models/transaction_type.dart';
 
 class AccountTypeConverter extends TypeConverter<AccountType, String> {
   const AccountTypeConverter();

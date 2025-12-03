@@ -147,12 +147,12 @@ class AddTransactionUseCase {
 
     final transactionEntity = TransactionEntity(
       id: uuid.v4(),
-      amountMinor: money.toMinor(),
+      amount: money,
       type: request.type,
       categoryId: request.categoryId,
       accountId: request.accountId,
-      date: dateValue.value,
-      note: noteValue.value,
+      date: dateValue,
+      note: noteValue,
       createdAt: DateTime.now(),
     );
 

@@ -1,8 +1,7 @@
 // lib/domain/usecases/account/delete_account_usecase.dart
-import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
-import '../repositories/account_repository.dart';
-import '../validation/account_validator.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
+import '../../repositories/account_repository.dart';
 
 class DeleteAccountUseCase {
   final AccountRepository _accountRepo;
@@ -24,12 +23,23 @@ class DeleteAccountUseCase {
     final count = (countRes as Success).value;
 
     // 3. Validate Deletion
-    final vDelete = AccountValidator.canDeleteAccount(
-      transactionsCount: count,
-      balanceMinor: account.balanceMinor,
-      requireZeroBalance: requireZeroBalance,
-    );
-    if (vDelete is Fail) return vDelete;
+    if (count > 0) {
+      return const Fail(
+        ValidationFailure(
+          'Cannot delete account with existing transactions',
+          code: 'account_has_transactions',
+        ),
+      );
+    }
+
+    if (requireZeroBalance && account.balance.minorUnits != 0) {
+      return const Fail(
+        ValidationFailure(
+          'Cannot delete account with non-zero balance',
+          code: 'account_non_zero_balance',
+        ),
+      );
+    }
 
     // 4. Delete
     return await _accountRepo.delete(accountId);

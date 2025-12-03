@@ -1,21 +1,26 @@
+// lib/domain/entities/account_entity.dart
 import 'package:meta/meta.dart';
 import '../../domain/models/account_type.dart';
+import '../value_objects/account_name.dart';
+import '../value_objects/money.dart';
+import '../value_objects/color_value.dart';
+import '../value_objects/icon_value.dart';
 
 @immutable
 class AccountEntity {
   final String id;
-  final String name;
-  final int balanceMinor; // store amount in minor units (e.g. qruush)
+  final AccountName name;
+  final Money balance;
   final AccountType type;
-  final String color;
-  final String? icon;
+  final ColorValue color;
+  final IconValue? icon;
   final bool isActive;
   final DateTime createdAt;
 
   const AccountEntity({
     required this.id,
     required this.name,
-    required this.balanceMinor,
+    required this.balance,
     required this.type,
     required this.color,
     this.icon,
@@ -25,18 +30,18 @@ class AccountEntity {
 
   AccountEntity copyWith({
     String? id,
-    String? name,
-    int? balanceMinor,
+    AccountName? name,
+    Money? balance,
     AccountType? type,
-    String? color,
-    String? icon,
+    ColorValue? color,
+    IconValue? icon,
     bool? isActive,
     DateTime? createdAt,
   }) {
     return AccountEntity(
       id: id ?? this.id,
       name: name ?? this.name,
-      balanceMinor: balanceMinor ?? this.balanceMinor,
+      balance: balance ?? this.balance,
       type: type ?? this.type,
       color: color ?? this.color,
       icon: icon ?? this.icon,
@@ -45,24 +50,13 @@ class AccountEntity {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'balanceMinor': balanceMinor,
-    'type': type.name,
-    'color': color,
-    'icon': icon,
-    'isActive': isActive,
-    'createdAt': createdAt.toIso8601String(),
-  };
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is AccountEntity &&
           other.id == id &&
           other.name == name &&
-          other.balanceMinor == balanceMinor &&
+          other.balance == balance &&
           other.type == type &&
           other.color == color &&
           other.icon == icon &&
@@ -70,14 +64,6 @@ class AccountEntity {
           other.createdAt == createdAt;
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    name,
-    balanceMinor,
-    type,
-    color,
-    icon,
-    isActive,
-    createdAt,
-  );
+  int get hashCode =>
+      Object.hash(id, name, balance, type, color, icon, isActive, createdAt);
 }

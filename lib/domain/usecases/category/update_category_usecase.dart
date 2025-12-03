@@ -1,31 +1,61 @@
 // lib/domain/usecases/category/update_category_usecase.dart
-import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
-import '../entities/category_entity.dart';
-import '../repositories/category_repository.dart';
-import '../validation/category_validator.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
+import '../../entities/category_entity.dart';
+import '../../models/category_type.dart';
+import '../../repositories/category_repository.dart';
+import '../../value_objects/category_name.dart';
+import '../../value_objects/icon_value.dart';
+import '../../value_objects/color_value.dart';
 
 class UpdateCategoryUseCase {
   final CategoryRepository _categoryRepo;
 
   UpdateCategoryUseCase(this._categoryRepo);
 
-  Future<Result<void>> call(CategoryEntity category) async {
-    // 1. Validation
-    final vName = CategoryValidator.validateCategoryName(category.name);
-    if (vName is Fail) return vName;
+  Future<Result<void>> call({
+    required String id,
+    String? name,
+    String? icon,
+    String? color,
+    CategoryType? type,
+  }) async {
+    // 1. Check Existence & Get Old Entity
+    final oldCategoryRes = await _categoryRepo.getById(id);
+    if (oldCategoryRes is Fail) return Fail((oldCategoryRes as Fail).failure);
+    final oldCategory = (oldCategoryRes as Success<CategoryEntity>).value;
 
-    final vIcon = CategoryValidator.validateIcon(category.icon);
-    if (vIcon is Fail) return vIcon;
+    // 2. Create Value Objects for updated fields
+    CategoryName? newName;
+    if (name != null) {
+      final res = CategoryName.create(name);
+      if (res is Fail) return Fail((res as Fail).failure);
+      newName = (res as Success<CategoryName>).value;
+    }
 
-    final vColor = CategoryValidator.validateColor(category.color);
-    if (vColor is Fail) return vColor;
+    IconValue? newIcon;
+    if (icon != null) {
+      final res = IconValue.create(icon);
+      if (res is Fail) return Fail((res as Fail).failure);
+      newIcon = (res as Success<IconValue>).value;
+    }
 
-    // 2. Check Existence
-    final existsRes = await _categoryRepo.getById(category.id);
-    if (existsRes is Fail) return existsRes;
+    ColorValue? newColor;
+    if (color != null) {
+      final res = ColorValue.create(color);
+      if (res is Fail) return Fail((res as Fail).failure);
+      newColor = (res as Success<ColorValue>).value;
+    }
 
-    // 3. Persist
-    return await _categoryRepo.update(category);
+    // 3. Update Entity
+    final updatedCategory = oldCategory.copyWith(
+      name: newName,
+      icon: newIcon,
+      color: newColor,
+      type: type,
+    );
+
+    // 4. Persist
+    return await _categoryRepo.update(updatedCategory);
   }
 }

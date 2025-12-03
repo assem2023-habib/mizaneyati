@@ -1,18 +1,21 @@
+// lib/domain/entities/budget_entity.dart
 import 'package:meta/meta.dart';
+import '../value_objects/money.dart';
+import '../value_objects/date_value.dart';
 
 @immutable
 class BudgetEntity {
   final String id;
   final String categoryId;
-  final int limitAmountMinor;
-  final DateTime startDate;
-  final DateTime endDate;
+  final Money limitAmount;
+  final DateValue startDate;
+  final DateValue endDate;
   final bool isActive;
 
   const BudgetEntity({
     required this.id,
     required this.categoryId,
-    required this.limitAmountMinor,
+    required this.limitAmount,
     required this.startDate,
     required this.endDate,
     this.isActive = true,
@@ -21,29 +24,20 @@ class BudgetEntity {
   BudgetEntity copyWith({
     String? id,
     String? categoryId,
-    int? limitAmountMinor,
-    DateTime? startDate,
-    DateTime? endDate,
+    Money? limitAmount,
+    DateValue? startDate,
+    DateValue? endDate,
     bool? isActive,
   }) {
     return BudgetEntity(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
-      limitAmountMinor: limitAmountMinor ?? this.limitAmountMinor,
+      limitAmount: limitAmount ?? this.limitAmount,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       isActive: isActive ?? this.isActive,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'categoryId': categoryId,
-    'limitAmountMinor': limitAmountMinor,
-    'startDate': startDate.toIso8601String(),
-    'endDate': endDate.toIso8601String(),
-    'isActive': isActive,
-  };
 
   @override
   bool operator ==(Object other) =>
@@ -51,18 +45,12 @@ class BudgetEntity {
       other is BudgetEntity &&
           other.id == id &&
           other.categoryId == categoryId &&
-          other.limitAmountMinor == limitAmountMinor &&
+          other.limitAmount == limitAmount &&
           other.startDate == startDate &&
           other.endDate == endDate &&
           other.isActive == isActive;
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    categoryId,
-    limitAmountMinor,
-    startDate,
-    endDate,
-    isActive,
-  );
+  int get hashCode =>
+      Object.hash(id, categoryId, limitAmount, startDate, endDate, isActive);
 }

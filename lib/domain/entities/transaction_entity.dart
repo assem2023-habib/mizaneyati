@@ -1,44 +1,48 @@
+// lib/domain/entities/transaction_entity.dart
 import 'package:meta/meta.dart';
 import '../../domain/models/transaction_type.dart';
+import '../value_objects/money.dart';
+import '../value_objects/date_value.dart';
+import '../value_objects/note_value.dart';
 
 @immutable
 class TransactionEntity {
   final String id;
-  final int amountMinor; // store as minor units
+  final Money amount;
   final TransactionType type;
   final String categoryId;
   final String accountId;
-  final DateTime date;
-  final String? note;
+  final DateValue date;
+  final NoteValue note;
   final String? receiptPath;
   final DateTime createdAt;
 
   const TransactionEntity({
     required this.id,
-    required this.amountMinor,
+    required this.amount,
     required this.type,
     required this.categoryId,
     required this.accountId,
     required this.date,
-    this.note,
+    required this.note,
     this.receiptPath,
     required this.createdAt,
   });
 
   TransactionEntity copyWith({
     String? id,
-    int? amountMinor,
+    Money? amount,
     TransactionType? type,
     String? categoryId,
     String? accountId,
-    DateTime? date,
-    String? note,
+    DateValue? date,
+    NoteValue? note,
     String? receiptPath,
     DateTime? createdAt,
   }) {
     return TransactionEntity(
       id: id ?? this.id,
-      amountMinor: amountMinor ?? this.amountMinor,
+      amount: amount ?? this.amount,
       type: type ?? this.type,
       categoryId: categoryId ?? this.categoryId,
       accountId: accountId ?? this.accountId,
@@ -49,24 +53,12 @@ class TransactionEntity {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'amountMinor': amountMinor,
-    'type': type.name,
-    'categoryId': categoryId,
-    'accountId': accountId,
-    'date': date.toIso8601String(),
-    'note': note,
-    'receiptPath': receiptPath,
-    'createdAt': createdAt.toIso8601String(),
-  };
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TransactionEntity &&
           other.id == id &&
-          other.amountMinor == amountMinor &&
+          other.amount == amount &&
           other.type == type &&
           other.categoryId == categoryId &&
           other.accountId == accountId &&
@@ -78,7 +70,7 @@ class TransactionEntity {
   @override
   int get hashCode => Object.hash(
     id,
-    amountMinor,
+    amount,
     type,
     categoryId,
     accountId,

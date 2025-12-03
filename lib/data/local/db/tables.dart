@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
 
 // Export enums so generated code can access them
-export '../../domain/models/account_type.dart';
-export '../../domain/models/category_type.dart';
-export '../../domain/models/transaction_type.dart';
+export '../../../domain/models/account_type.dart';
+export '../../../domain/models/category_type.dart';
+export '../../../domain/models/transaction_type.dart';
 
 import 'type_converters.dart';
 

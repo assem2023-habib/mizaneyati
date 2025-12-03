@@ -1,6 +1,8 @@
 // lib/domain/usecases/transaction/delete_transaction_usecase.dart
-import '../../core/utils/result.dart';
-import '../repositories/transaction_repository.dart';
+// import 'package:mizaneyati/core/utils/result.dart';
+
+import '../../../core/utils/result.dart';
+import '../../repositories/transaction_repository.dart';
 
 class DeleteTransactionUseCase {
   final TransactionRepository _txRepo;

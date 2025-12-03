@@ -1,10 +1,12 @@
 // lib/domain/usecases/budget/create_budget_usecase.dart
 import 'package:uuid/uuid.dart';
-import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
-import '../entities/budget_entity.dart';
-import '../repositories/budget_repository.dart';
-import '../repositories/category_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
+import '../../entities/budget_entity.dart';
+import '../../repositories/budget_repository.dart';
+import '../../repositories/category_repository.dart';
+import '../../value_objects/money.dart';
+import '../../value_objects/date_value.dart';
 
 class CreateBudgetUseCase {
   final BudgetRepository _budgetRepo;
@@ -13,52 +15,48 @@ class CreateBudgetUseCase {
 
   CreateBudgetUseCase(this._budgetRepo, this._categoryRepo);
 
-  Future<Result<String>> call({
-    required String name,
-    required int amountMinor,
+  Future<Result<Object>> call({
+    required int limitAmountMinor,
     required String categoryId,
     required DateTime startDate,
     required DateTime endDate,
-    bool isRecurring = false,
   }) async {
-    // 1. Validation
-    if (amountMinor <= 0) {
-      return const Fail(
-        ValidationFailure(
-          'مبلغ الميزانية يجب أن يكون أكبر من صفر',
-          code: 'invalid_budget_amount',
-        ),
-      );
-    }
+    // 1. Create Value Objects (Validation)
+    final limitResult = Money.create(limitAmountMinor);
+    if (limitResult is Fail) return limitResult;
 
-    if (endDate.isBefore(startDate)) {
+    final startResult = DateValue.create(startDate);
+    if (startResult is Fail) return startResult;
+
+    final endResult = DateValue.create(endDate);
+    if (endResult is Fail) return endResult;
+
+    // 2. Business Validation
+    if (endDate.isBefore(startDate) || endDate.isAtSameMomentAs(startDate)) {
       return const Fail(
         ValidationFailure(
-          'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء',
+          'End date must be after start date',
           code: 'invalid_date_range',
         ),
       );
     }
 
-    // 2. Check Category Existence
+    // 3. Check Category Existence
     final catRes = await _categoryRepo.getById(categoryId);
     if (catRes is Fail) return catRes;
 
-    // 3. Build Entity
+    // 4. Build Entity
     final id = _uuid.v4();
     final budget = BudgetEntity(
       id: id,
-      name: name,
-      amountMinor: amountMinor,
       categoryId: categoryId,
-      startDate: startDate,
-      endDate: endDate,
-      isRecurring: isRecurring,
+      limitAmount: (limitResult as Success<Money>).value,
+      startDate: (startResult as Success<DateValue>).value,
+      endDate: (endResult as Success<DateValue>).value,
       isActive: true,
-      createdAt: DateTime.now(),
     );
 
-    // 4. Persist
+    // 5. Persist
     return await _budgetRepo.create(budget);
   }
 }

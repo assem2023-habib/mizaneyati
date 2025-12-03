@@ -1,7 +1,7 @@
 // lib/domain/usecases/transaction/get_transactions_usecase.dart
-import '../../core/utils/result.dart';
-import '../entities/transaction_entity.dart';
-import '../repositories/transaction_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../entities/transaction_entity.dart';
+import '../../repositories/transaction_repository.dart';
 
 class GetTransactionsUseCase {
   final TransactionRepository _txRepo;
