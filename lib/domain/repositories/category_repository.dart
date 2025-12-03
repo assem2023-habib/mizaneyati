@@ -38,4 +38,7 @@ abstract class CategoryRepository {
 
   /// Gets the most used categories (by transaction count)
   Future<Result<List<CategoryEntity>>> getMostUsed({int limit = 5});
+
+  /// Checks if a category with the given name exists
+  Future<Result<bool>> existsByName(String name);
 }

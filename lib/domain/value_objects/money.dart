@@ -1,6 +1,5 @@
 import 'package:meta/meta.dart';
 import '../../core/utils/result.dart';
-import '../../core/errors/failures.dart';
 
 /// Value Object representing monetary amounts in minor units (e.g., qruush for SYP)
 ///
@@ -25,16 +24,10 @@ class Money {
   ///
   /// [minorUnits] - Amount in smallest currency unit (e.g., qruush)
   ///
-  /// Returns [ValidationFailure] if amount is negative.
+  /// Returns [Success] with [Money] instance.
   static Result<Money> create(int minorUnits) {
-    if (minorUnits < 0) {
-      return const Fail(
-        ValidationFailure(
-          'Amount must be greater than or equal to zero',
-          code: 'money_negative',
-        ),
-      );
-    }
+    // We allow negative values for balances and adjustments.
+    // Specific business rules (e.g., price must be positive) should be checked in Validators.
     return Success(Money._(minorUnits));
   }
 
@@ -48,6 +41,14 @@ class Money {
 
   /// Create a copy with optional new value
   Money copyWith({int? minorUnits}) => Money._(minorUnits ?? this.minorUnits);
+
+  Money operator +(Money other) => Money._(minorUnits + other.minorUnits);
+  Money operator -(Money other) => Money._(minorUnits - other.minorUnits);
+
+  bool operator <(Money other) => minorUnits < other.minorUnits;
+  bool operator <=(Money other) => minorUnits <= other.minorUnits;
+  bool operator >(Money other) => minorUnits > other.minorUnits;
+  bool operator >=(Money other) => minorUnits >= other.minorUnits;
 
   @override
   bool operator ==(Object other) =>

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/errors/failures.dart';
 import '../../entities/transaction_entity.dart';
+import '../../entities/account_entity.dart';
 import '../../models/transaction_type.dart';
 import '../../models/category_type.dart';
 import '../../repositories/transaction_repository.dart';
@@ -95,10 +96,20 @@ class AddTransactionUseCase {
     }
 
     // Check Destination Account (for Transfer)
-    if (type == TransactionType.transfer && toAccountId != null) {
+    AccountEntity? toAccount;
+    if (type == TransactionType.transfer) {
+      if (toAccountId == null) {
+        return const Fail(
+          ValidationFailure(
+            'Transfer requires valid destination account',
+            code: 'transfer_destination_missing',
+          ),
+        );
+      }
+
       final toAccRes = await _accountRepo.getById(toAccountId);
       if (toAccRes is Fail) return Fail((toAccRes as Fail).failure);
-      final toAccount = (toAccRes as Success).value;
+      toAccount = (toAccRes as Success<AccountEntity>).value;
 
       if (!toAccount.isActive) {
         return const Fail(
@@ -110,21 +121,53 @@ class AddTransactionUseCase {
       }
     }
 
-    // 3. Build Entity
+    // 3. Business Logic: Update Balances
+    AccountEntity updatedAccount = account;
+    AccountEntity? updatedToAccount;
+    final moneyAmount = (amountResult as Success<Money>).value;
+
+    if (type == TransactionType.expense) {
+      final res = account.debit(moneyAmount);
+      if (res is Fail) return Fail((res).failure);
+      updatedAccount = (res as Success<AccountEntity>).value;
+    } else if (type == TransactionType.income) {
+      final res = account.credit(moneyAmount);
+      if (res is Fail) return Fail((res).failure);
+      updatedAccount = (res as Success<AccountEntity>).value;
+    } else if (type == TransactionType.transfer) {
+      // Debit source
+      final debitRes = account.debit(moneyAmount);
+      if (debitRes is Fail) return Fail((debitRes).failure);
+      updatedAccount = (debitRes as Success<AccountEntity>).value;
+
+      // Credit destination
+      if (toAccount != null) {
+        final creditRes = toAccount.credit(moneyAmount);
+        if (creditRes is Fail) return Fail((creditRes as Fail).failure);
+        updatedToAccount = (creditRes as Success<AccountEntity>).value;
+      }
+    }
+
+    // 4. Build Entity
     final txId = _uuid.v4();
     final txEntity = TransactionEntity(
       id: txId,
-      amount: (amountResult as Success<Money>).value,
+      amount: moneyAmount,
       type: type,
       categoryId: categoryId,
       accountId: accountId,
+      toAccountId: toAccountId,
       date: (dateResult as Success<DateValue>).value,
       note: (noteResult as Success<NoteValue>).value,
       receiptPath: receiptPath,
       createdAt: DateTime.now(),
     );
 
-    // 4. Persist (Atomic operation in Repository)
-    return await _txRepo.createTransaction(txEntity, toAccountId: toAccountId);
+    // 5. Persist (Atomic operation in Repository)
+    return await _txRepo.createTransaction(
+      txEntity,
+      account: updatedAccount,
+      toAccount: updatedToAccount,
+    );
   }
 }

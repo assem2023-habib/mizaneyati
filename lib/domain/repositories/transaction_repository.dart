@@ -1,5 +1,6 @@
 // lib/domain/repositories/transaction_repository.dart
 import '../entities/transaction_entity.dart';
+import '../entities/account_entity.dart';
 import '../models/transaction_type.dart';
 import '../../core/utils/result.dart';
 
@@ -11,24 +12,38 @@ import '../../core/utils/result.dart';
 abstract class TransactionRepository {
   /// Creates a new transaction and updates account balances atomically
   ///
-  /// For transfers, [toAccountId] must be provided.
+  /// [account] is the source account with the updated balance (after debit/credit).
+  /// For transfers, [toAccount] must be provided with its updated balance.
   /// This operation must be executed in a database transaction to ensure
   /// that both the transaction record and account balances are updated together.
   Future<Result<String>> createTransaction(
     TransactionEntity tx, {
-    String? toAccountId,
+    required AccountEntity account,
+    AccountEntity? toAccount,
   });
 
   /// Updates an existing transaction
   ///
+  /// [affectedAccounts] contains all accounts that had their balances modified
+  /// during this operation (e.g. old source, new source, old dest, new dest).
+  ///
   /// Must reverse old transaction effects and apply new ones atomically.
-  /// This includes updating account balances.
-  Future<Result<void>> updateTransaction(TransactionEntity tx);
+  Future<Result<void>> updateTransaction(
+    TransactionEntity tx, {
+    required List<AccountEntity> affectedAccounts,
+  });
 
   /// Deletes a transaction and reverses its effects on account balances
   ///
+  /// [account] is the account with the balance reversed (original amount added back/deducted).
+  /// [toAccount] is the destination account with balance reversed (if transfer).
+  ///
   /// Must be atomic - delete record and update balances together.
-  Future<Result<void>> deleteTransaction(String txId);
+  Future<Result<void>> deleteTransaction(
+    String txId, {
+    required AccountEntity account,
+    AccountEntity? toAccount,
+  });
 
   /// Gets a transaction by ID
   Future<Result<TransactionEntity>> getById(String txId);

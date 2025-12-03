@@ -7,6 +7,7 @@ import '../../repositories/budget_repository.dart';
 import '../../repositories/category_repository.dart';
 import '../../value_objects/money.dart';
 import '../../value_objects/date_value.dart';
+import '../../validation/budget_validator.dart';
 
 class CreateBudgetUseCase {
   final BudgetRepository _budgetRepo;
@@ -15,7 +16,7 @@ class CreateBudgetUseCase {
 
   CreateBudgetUseCase(this._budgetRepo, this._categoryRepo);
 
-  Future<Result<Object>> call({
+  Future<Object> call({
     required int limitAmountMinor,
     required String categoryId,
     required DateTime startDate,
@@ -45,18 +46,33 @@ class CreateBudgetUseCase {
     final catRes = await _categoryRepo.getById(categoryId);
     if (catRes is Fail) return catRes;
 
+    // 4. Check for Overlap
+    final existingBudgetsRes = await _budgetRepo.getByCategory(categoryId);
+    if (existingBudgetsRes is Fail) return existingBudgetsRes;
+    final existingBudgets =
+        (existingBudgetsRes as Success<List<BudgetEntity>>).value;
+
+    final overlapRes = BudgetValidator.validateNoOverlap(
+      newStart: (startResult as Success<DateValue>).value.value,
+      newEnd: (endResult as Success<DateValue>).value.value,
+      existingBudgets: existingBudgets,
+    );
+    if (overlapRes is Fail) return overlapRes;
+
     // 4. Build Entity
     final id = _uuid.v4();
     final budget = BudgetEntity(
       id: id,
       categoryId: categoryId,
       limitAmount: (limitResult as Success<Money>).value,
-      startDate: (startResult as Success<DateValue>).value,
-      endDate: (endResult as Success<DateValue>).value,
+      startDate: (startResult).value,
+      endDate: (endResult).value,
       isActive: true,
     );
 
     // 5. Persist
-    return await _budgetRepo.create(budget);
+    final result = await _budgetRepo.create(budget);
+    if (result is Fail) return Fail<Object>((result as Fail).failure);
+    return Success<Object>((result as Success).value);
   }
 }

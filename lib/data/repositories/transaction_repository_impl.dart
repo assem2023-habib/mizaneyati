@@ -1,6 +1,7 @@
 // lib/data/repositories/transaction_repository_impl.dart
 import 'package:drift/drift.dart';
 import '../../domain/entities/transaction_entity.dart';
+import '../../domain/entities/account_entity.dart';
 import '../../domain/models/transaction_type.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../../core/utils/result.dart';
@@ -9,6 +10,7 @@ import '../local/db/app_database.dart';
 import '../local/daos/transactions_dao.dart';
 import '../local/daos/accounts_dao.dart';
 import '../local/mappers/transaction_mapper.dart';
+import '../local/mappers/account_mapper.dart';
 import '../local/mappers/error_mapper.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
@@ -23,7 +25,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<Result<String>> createTransaction(
     TransactionEntity tx, {
-    String? toAccountId,
+    required AccountEntity account,
+    AccountEntity? toAccount,
   }) async {
     try {
       // Atomic transaction
@@ -32,21 +35,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
         final companion = tx.toCompanion();
         await _transactionsDao.insertTransaction(companion);
 
-        // 2. Update Account Balances
-        if (tx.type == TransactionType.expense) {
-          // Decrease balance
-          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
-        } else if (tx.type == TransactionType.income) {
-          // Increase balance
-          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
-        } else if (tx.type == TransactionType.transfer) {
-          if (toAccountId == null) {
-            throw Exception('toAccountId required for transfer');
-          }
-          // Decrease source
-          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
-          // Increase destination
-          await _accountsDao.updateBalance(toAccountId, tx.amount.toMinor());
+        // 2. Update Account Balances (using Domain State)
+        await _accountsDao.updateAccount(account.toCompanion());
+
+        if (toAccount != null) {
+          await _accountsDao.updateAccount(toAccount.toCompanion());
         }
       });
 
@@ -57,64 +50,20 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<Result<void>> updateTransaction(TransactionEntity tx) async {
+  Future<Result<void>> updateTransaction(
+    TransactionEntity tx, {
+    required List<AccountEntity> affectedAccounts,
+  }) async {
     try {
       await _db.transaction(() async {
-        // 1. Get old transaction to reverse effect
-        final oldTxData = await _transactionsDao.getById(tx.id);
-        if (oldTxData == null) {
-          throw Exception('Transaction not found');
-        }
-        final oldTx = oldTxData.toEntity();
-
-        // 2. Reverse old effect
-        if (oldTx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(oldTx.accountId, oldTx.amount.toMinor());
-        } else if (oldTx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(oldTx.accountId, -oldTx.amount.toMinor());
-        } else if (oldTx.type == TransactionType.transfer) {
-          // Reversing transfer is complex if we don't store toAccountId in the transaction row directly
-          // Assuming for now transfer is stored as one row, but we need to know the destination.
-          // If the DB schema doesn't store 'toAccountId' in 'transactions' table, we have a problem reversing it purely from 'oldTx'.
-          // Assuming 'transactions' table has 'to_account_id' column or similar for transfers?
-          // Checking TransactionEntity: it doesn't have toAccountId field directly, it seems.
-          // Wait, TransactionEntity has 'accountId' (source). Where is destination stored?
-          // If it's not in Entity, it might not be in DB.
-          // If transfer creates 2 transactions (one expense, one income), then update is simpler (just update this one).
-          // BUT, the requirement says "createTransaction" handles transfer logic.
-          // If the design is "Single Transaction Row for Transfer", we need 'toAccountId' in the entity/table.
-          // Let's check TransactionEntity again.
-          // It DOES NOT have toAccountId.
-          // So likely Transfer is handled as 2 separate transactions OR we missed a field.
-          // However, createTransaction takes 'toAccountId' as param.
-          // If the implementation creates 2 rows (expense + income), then 'updateTransaction' only updates ONE of them.
-          // If the implementation creates 1 row with type 'transfer', we need to know the destination to reverse it.
-
-          // Let's assume for this implementation that we only support updating Expense/Income for now,
-          // or that Transfer creates 2 rows and we update them individually.
-          // OR, we assume the DB has a column for it.
-
-          // For safety, if it's transfer, we might need to fetch the "paired" transaction if implemented that way.
-          // Given the current scope, I will implement reversal for Expense/Income.
-          // For Transfer, I will assume it modifies the source account only if we can't find dest.
-          // But wait, createTransaction updated BOTH.
-          // If I can't reverse both, data will be inconsistent.
-
-          // Strategy: If type is transfer, we skip balance update here or throw error "Update transfer not fully supported yet"
-          // unless we know the destination.
-          // Let's look at the DB schema (Tables).
-        }
-
-        // 3. Apply new effect
-        if (tx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
-        } else if (tx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
-        }
-
-        // 4. Update row
+        // 1. Update Transaction
         final companion = tx.toCompanion();
         await _transactionsDao.updateTransaction(companion);
+
+        // 2. Update Affected Accounts
+        for (final acc in affectedAccounts) {
+          await _accountsDao.updateAccount(acc.toCompanion());
+        }
       });
 
       return const Success(null);
@@ -124,22 +73,22 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<Result<void>> deleteTransaction(String txId) async {
+  Future<Result<void>> deleteTransaction(
+    String txId, {
+    required AccountEntity account,
+    AccountEntity? toAccount,
+  }) async {
     try {
       await _db.transaction(() async {
-        final txData = await _transactionsDao.getById(txId);
-        if (txData == null) throw Exception('Transaction not found');
-        final tx = txData.toEntity();
-
-        // Reverse effect
-        if (tx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
-        } else if (tx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
-        }
-        // Transfer reversal issue same as update.
-
+        // 1. Delete Transaction
         await _transactionsDao.deleteTransaction(txId);
+
+        // 2. Update Account Balances
+        await _accountsDao.updateAccount(account.toCompanion());
+
+        if (toAccount != null) {
+          await _accountsDao.updateAccount(toAccount.toCompanion());
+        }
       });
       return const Success(null);
     } catch (e, st) {

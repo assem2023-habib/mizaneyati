@@ -1,6 +1,7 @@
 // lib/domain/usecases/category/create_category_usecase.dart
 import 'package:uuid/uuid.dart';
 import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
 import '../../entities/category_entity.dart';
 import '../../models/category_type.dart';
 import '../../repositories/category_repository.dart';
@@ -30,7 +31,22 @@ class CreateCategoryUseCase {
     final colorResult = ColorValue.create(color);
     if (colorResult is Fail) return Fail((colorResult as Fail).failure);
 
-    // 2. Build Entity
+    // 2. Business Validation
+    // Check Uniqueness
+    final existsRes = await _categoryRepo.existsByName(name);
+    if (existsRes is Fail) return Fail((existsRes as Fail).failure);
+    final exists = (existsRes as Success<bool>).value;
+
+    if (exists) {
+      return const Fail(
+        ValidationFailure(
+          'Category name already exists',
+          code: 'category_name_duplicate',
+        ),
+      );
+    }
+
+    // 3. Build Entity
     final id = _uuid.v4();
     final category = CategoryEntity(
       id: id,

@@ -45,7 +45,10 @@ final updateTransactionUseCaseProvider = Provider<UpdateTransactionUseCase>((
 final deleteTransactionUseCaseProvider = Provider<DeleteTransactionUseCase>((
   ref,
 ) {
-  return DeleteTransactionUseCase(ref.watch(transactionRepositoryProvider));
+  return DeleteTransactionUseCase(
+    ref.watch(transactionRepositoryProvider),
+    ref.watch(accountRepositoryProvider),
+  );
 });
 
 final getTransactionsUseCaseProvider = Provider<GetTransactionsUseCase>((ref) {

@@ -1,5 +1,6 @@
 // lib/domain/usecases/category/update_category_usecase.dart
 import '../../../core/utils/result.dart';
+import '../../../core/errors/failures.dart';
 import '../../entities/category_entity.dart';
 import '../../models/category_type.dart';
 import '../../repositories/category_repository.dart';
@@ -27,6 +28,19 @@ class UpdateCategoryUseCase {
     // 2. Create Value Objects for updated fields
     CategoryName? newName;
     if (name != null) {
+      if (name != oldCategory.name.value) {
+        final existsRes = await _categoryRepo.existsByName(name);
+        if (existsRes is Fail) return Fail((existsRes as Fail).failure);
+        if ((existsRes as Success<bool>).value) {
+          return const Fail(
+            ValidationFailure(
+              'Category name already exists',
+              code: 'category_name_duplicate',
+            ),
+          );
+        }
+      }
+
       final res = CategoryName.create(name);
       if (res is Fail) return Fail((res as Fail).failure);
       newName = (res as Success<CategoryName>).value;

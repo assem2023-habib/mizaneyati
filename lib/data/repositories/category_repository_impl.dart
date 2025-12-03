@@ -186,4 +186,20 @@ class CategoryRepositoryImpl implements CategoryRepository {
       return Fail(mapExceptionToFailure(e, st));
     }
   }
+
+  @override
+  Future<Result<bool>> existsByName(String name) async {
+    try {
+      final count = await _db
+          .customSelect(
+            'SELECT COUNT(*) as c FROM categories WHERE name = ?',
+            variables: [Variable.withString(name)],
+          )
+          .map((row) => row.read<int>('c'))
+          .getSingle();
+      return Success(count > 0);
+    } catch (e, st) {
+      return Fail(mapExceptionToFailure(e, st));
+    }
+  }
 }

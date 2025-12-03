@@ -12,6 +12,7 @@ class TransactionEntity {
   final TransactionType type;
   final String categoryId;
   final String accountId;
+  final String? toAccountId; // For transfers
   final DateValue date;
   final NoteValue note;
   final String? receiptPath;
@@ -23,6 +24,7 @@ class TransactionEntity {
     required this.type,
     required this.categoryId,
     required this.accountId,
+    this.toAccountId,
     required this.date,
     required this.note,
     this.receiptPath,
@@ -35,6 +37,7 @@ class TransactionEntity {
     TransactionType? type,
     String? categoryId,
     String? accountId,
+    String? toAccountId,
     DateValue? date,
     NoteValue? note,
     String? receiptPath,
@@ -46,6 +49,7 @@ class TransactionEntity {
       type: type ?? this.type,
       categoryId: categoryId ?? this.categoryId,
       accountId: accountId ?? this.accountId,
+      toAccountId: toAccountId ?? this.toAccountId,
       date: date ?? this.date,
       note: note ?? this.note,
       receiptPath: receiptPath ?? this.receiptPath,
@@ -62,6 +66,7 @@ class TransactionEntity {
           other.type == type &&
           other.categoryId == categoryId &&
           other.accountId == accountId &&
+          other.toAccountId == toAccountId &&
           other.date == date &&
           other.note == note &&
           other.receiptPath == receiptPath &&
@@ -74,6 +79,7 @@ class TransactionEntity {
     type,
     categoryId,
     accountId,
+    toAccountId,
     date,
     note,
     receiptPath,
