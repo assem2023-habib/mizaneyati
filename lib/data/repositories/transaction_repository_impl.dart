@@ -35,18 +35,18 @@ class TransactionRepositoryImpl implements TransactionRepository {
         // 2. Update Account Balances
         if (tx.type == TransactionType.expense) {
           // Decrease balance
-          await _accountsDao.updateBalance(tx.accountId, -tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
         } else if (tx.type == TransactionType.income) {
           // Increase balance
-          await _accountsDao.updateBalance(tx.accountId, tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
         } else if (tx.type == TransactionType.transfer) {
           if (toAccountId == null) {
             throw Exception('toAccountId required for transfer');
           }
           // Decrease source
-          await _accountsDao.updateBalance(tx.accountId, -tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
           // Increase destination
-          await _accountsDao.updateBalance(toAccountId, tx.amountMinor);
+          await _accountsDao.updateBalance(toAccountId, tx.amount.toMinor());
         }
       });
 
@@ -69,9 +69,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
         // 2. Reverse old effect
         if (oldTx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(oldTx.accountId, oldTx.amountMinor);
+          await _accountsDao.updateBalance(oldTx.accountId, oldTx.amount.toMinor());
         } else if (oldTx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(oldTx.accountId, -oldTx.amountMinor);
+          await _accountsDao.updateBalance(oldTx.accountId, -oldTx.amount.toMinor());
         } else if (oldTx.type == TransactionType.transfer) {
           // Reversing transfer is complex if we don't store toAccountId in the transaction row directly
           // Assuming for now transfer is stored as one row, but we need to know the destination.
@@ -107,9 +107,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
         // 3. Apply new effect
         if (tx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(tx.accountId, -tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
         } else if (tx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(tx.accountId, tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
         }
 
         // 4. Update row
@@ -133,9 +133,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
         // Reverse effect
         if (tx.type == TransactionType.expense) {
-          await _accountsDao.updateBalance(tx.accountId, tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, tx.amount.toMinor());
         } else if (tx.type == TransactionType.income) {
-          await _accountsDao.updateBalance(tx.accountId, -tx.amountMinor);
+          await _accountsDao.updateBalance(tx.accountId, -tx.amount.toMinor());
         }
         // Transfer reversal issue same as update.
 

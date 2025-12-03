@@ -142,7 +142,7 @@ class AccountRepositoryImpl implements AccountRepository {
       final accounts = await _accountsDao.getActiveAccounts();
       final total = accounts.fold(
         0,
-        (sum, acc) => sum + (acc.balanceMinor ?? 0),
+        (sum, acc) => sum + ((acc.balance * 100).round()),
       );
       return Success(total);
     } catch (e, st) {

@@ -3,12 +3,18 @@ import 'package:drift/drift.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/models/category_type.dart';
 import '../../domain/repositories/category_repository.dart';
+
 import '../../core/utils/result.dart';
 import '../../core/errors/failures.dart';
+
 import '../local/db/app_database.dart';
 import '../local/daos/categories_dao.dart';
 import '../local/mappers/category_mapper.dart';
 import '../local/mappers/error_mapper.dart';
+
+import '../../domain/value_objects/category_name.dart';
+import '../../domain/value_objects/icon_value.dart';
+import '../../domain/value_objects/color_value.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoriesDao _categoriesDao;
@@ -148,17 +154,32 @@ class CategoryRepositoryImpl implements CategoryRepository {
           )
           .get();
 
-      final categories = rows.map((row) {
-        return CategoryEntity(
-          id: row.read<String>('id'),
-          name: row.read<String>('name'),
-          icon: row.read<String>('icon'),
-          color: row.read<String>('color'),
-          type: CategoryType.values.firstWhere(
-            (e) => e.name == row.read<String>('type'),
+      final categories = <CategoryEntity>[];
+
+      for (final row in rows) {
+        // Create value objects from raw strings
+        final nameResult = CategoryName.create(row.read<String>('name'));
+        final iconResult = IconValue.create(row.read<String>('icon'));
+        final colorResult = ColorValue.create(row.read<String>('color'));
+
+        // Check if all value objects were created successfully
+        if (nameResult is Fail || iconResult is Fail || colorResult is Fail) {
+          // Skip invalid categories or throw error
+          continue; // Or you could throw an exception
+        }
+
+        categories.add(
+          CategoryEntity(
+            id: row.read<String>('id'),
+            name: (nameResult as Success<CategoryName>).value,
+            icon: (iconResult as Success<IconValue>).value,
+            color: (colorResult as Success<ColorValue>).value,
+            type: CategoryType.values.firstWhere(
+              (e) => e.name == row.read<String>('type'),
+            ),
           ),
         );
-      }).toList();
+      }
 
       return Success(categories);
     } catch (e, st) {

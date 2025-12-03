@@ -4,6 +4,8 @@ import '../../core/errors/failures.dart';
 import '../../core/utils/result.dart';
 import '../../core/utils/error_mapper.dart';
 import '../../domain/entities/budget_entity.dart';
+import '../../domain/value_objects/money.dart';
+import '../../domain/value_objects/date_value.dart';
 import '../local/daos/budgets_dao.dart';
 import '../local/mappers/budget_mapper.dart';
 
@@ -70,12 +72,29 @@ class BudgetRepository {
       }
 
       final id = _uuid.v4();
+
+      // Create Value Objects
+      final limitAmountMinor = (limitAmount * 100).toInt();
+      final moneyResult = Money.create(limitAmountMinor);
+      final startDateResult = DateValue.create(startDate);
+      final endDateResult = DateValue.create(endDate);
+
+      if (moneyResult is Fail) {
+        return Fail((moneyResult as Fail).failure);
+      }
+      if (startDateResult is Fail) {
+        return Fail((startDateResult as Fail).failure);
+      }
+      if (endDateResult is Fail) {
+        return Fail((endDateResult as Fail).failure);
+      }
+
       final entity = BudgetEntity(
         id: id,
         categoryId: categoryId,
-        limitAmountMinor: (limitAmount * 100).toInt(), // Convert to minor units
-        startDate: startDate,
-        endDate: endDate,
+        limitAmount: (moneyResult as Success<Money>).value,
+        startDate: (startDateResult as Success<DateValue>).value,
+        endDate: (endDateResult as Success<DateValue>).value,
         isActive: true,
       );
 
@@ -94,7 +113,7 @@ class BudgetRepository {
   Future<Result<bool>> updateBudget(BudgetEntity budget) async {
     try {
       // Validation
-      if (budget.limitAmountMinor <= 0) {
+      if (budget.limitAmount.minorUnits <= 0) {
         return const Fail(
           ValidationFailure(
             'حد الميزانية يجب أن يكون أكبر من صفر',
@@ -103,7 +122,7 @@ class BudgetRepository {
         );
       }
 
-      if (budget.startDate.isAfter(budget.endDate)) {
+      if (budget.startDate.value.isAfter(budget.endDate.value)) {
         return const Fail(
           ValidationFailure(
             'تاريخ البداية يجب أن يكون قبل تاريخ النهاية',
