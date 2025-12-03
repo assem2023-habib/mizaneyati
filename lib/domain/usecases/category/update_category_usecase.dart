@@ -1,6 +1,5 @@
 // lib/domain/usecases/category/update_category_usecase.dart
 import '../../../core/utils/result.dart';
-import '../../../core/errors/failures.dart';
 import '../../entities/category_entity.dart';
 import '../../models/category_type.dart';
 import '../../repositories/category_repository.dart';

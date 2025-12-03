@@ -182,7 +182,7 @@ class AddTransactionUseCase {
     );
 
     if (updateBalanceResult is Fail) {
-      return Fail((updateBalanceResult as Fail).failure);
+      return Fail((updateBalanceResult).failure);
     }
 
     // ========================================
