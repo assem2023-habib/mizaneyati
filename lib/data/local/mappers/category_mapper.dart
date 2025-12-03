@@ -15,7 +15,9 @@ extension CategoryMapper on Category {
 
     T getValueOrThrow<T>(Result<T> result, String field) {
       if (result is Success<T>) return result.value;
-      throw Exception('Data corruption in DB for field $field: ${(result as Fail).failure.message}');
+      throw Exception(
+        'Data corruption in DB for field $field: ${(result as Fail).failure.message}',
+      );
     }
 
     return CategoryEntity(
@@ -33,8 +35,8 @@ extension CategoryEntityMapper on CategoryEntity {
     return CategoriesCompanion(
       id: Value(id),
       name: Value(name.value),
-      icon: Value(icon.value),
-      color: Value(color.value),
+      icon: Value(icon.name), // IconValue uses .name
+      color: Value(color.hex), // ColorValue uses .hex
       type: Value(type),
     );
   }

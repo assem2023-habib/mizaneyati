@@ -8,7 +8,7 @@ import '../../core/errors/failures.dart';
 import '../local/db/app_database.dart';
 import '../local/daos/categories_dao.dart';
 import '../local/mappers/category_mapper.dart';
-import 'error_mapper.dart';
+import '../local/mappers/error_mapper.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoriesDao _categoriesDao;

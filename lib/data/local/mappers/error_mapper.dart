@@ -1,7 +1,7 @@
 // lib/data/repositories/error_mapper.dart
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import '../../core/errors/failures.dart';
+import '../../../core/errors/failures.dart';
 
 /// Maps exceptions from Data Layer (Drift/SQLite) to Domain Failures
 Failure mapExceptionToFailure(Object e, [StackTrace? stackTrace]) {

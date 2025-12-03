@@ -12,7 +12,7 @@ extension AccountMapper on Account {
   AccountEntity toEntity() {
     // We assume DB data is valid. If not, we force unwrap or use fallback.
     // Ideally, we should log warnings if data is invalid.
-    
+
     final nameResult = AccountName.create(name);
     // DB stores balance as double (Lira), convert to minor units (qruush)
     final balanceResult = Money.create((balance * 100).toInt());
@@ -24,7 +24,9 @@ extension AccountMapper on Account {
       if (result is Success<T>) return result.value;
       // In a real app, we might return a default or log this.
       // For strict domain, we throw.
-      throw Exception('Data corruption in DB for field $field: ${(result as Fail).failure.message}');
+      throw Exception(
+        'Data corruption in DB for field $field: ${(result as Fail).failure.message}',
+      );
     }
 
     return AccountEntity(
@@ -45,10 +47,12 @@ extension AccountEntityMapper on AccountEntity {
     return AccountsCompanion(
       id: Value(id),
       name: Value(name.value),
-      balance: Value(balance.toMajor()), // Convert minor units back to Lira (double)
+      balance: Value(
+        balance.toMajor(),
+      ), // Convert minor units back to Lira (double)
       type: Value(type),
-      color: Value(color.value),
-      icon: Value(icon?.value),
+      color: Value(color.hex), // Note: ColorValue uses .hex
+      icon: Value(icon?.name), // IconValue uses .name
       isActive: Value(isActive),
       createdAt: Value(createdAt),
     );

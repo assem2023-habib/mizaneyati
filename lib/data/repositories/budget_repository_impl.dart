@@ -7,7 +7,7 @@ import '../../core/errors/failures.dart';
 import '../local/db/app_database.dart';
 import '../local/daos/budgets_dao.dart';
 import '../local/mappers/budget_mapper.dart';
-import 'error_mapper.dart';
+import '../local/mappers/error_mapper.dart';
 
 class BudgetRepositoryImpl implements BudgetRepository {
   final BudgetsDao _budgetsDao;

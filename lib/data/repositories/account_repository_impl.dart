@@ -7,7 +7,7 @@ import '../../core/errors/failures.dart';
 import '../local/db/app_database.dart';
 import '../local/daos/accounts_dao.dart';
 import '../local/mappers/account_mapper.dart';
-import 'error_mapper.dart';
+import '../local/mappers/error_mapper.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AccountsDao _accountsDao;

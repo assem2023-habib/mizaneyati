@@ -9,7 +9,7 @@ import '../local/db/app_database.dart';
 import '../local/daos/transactions_dao.dart';
 import '../local/daos/accounts_dao.dart';
 import '../local/mappers/transaction_mapper.dart';
-import 'error_mapper.dart';
+import '../local/mappers/error_mapper.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
   final AppDatabase _db;

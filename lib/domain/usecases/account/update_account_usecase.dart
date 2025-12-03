@@ -1,6 +1,5 @@
 // lib/domain/usecases/account/update_account_usecase.dart
 import '../../../core/utils/result.dart';
-import '../../../core/errors/failures.dart';
 import '../../entities/account_entity.dart';
 import '../../repositories/account_repository.dart';
 import '../../value_objects/account_name.dart';
