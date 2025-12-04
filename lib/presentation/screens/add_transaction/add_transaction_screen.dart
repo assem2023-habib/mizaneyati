@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart' as intl;
 import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/gradient_background.dart';
+
+// Widget Imports
+import 'widgets/widgets.dart';
 
 // Domain Imports
 import '../../../domain/entities/account_entity.dart';
@@ -194,26 +196,36 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(context),
+              const AddTransactionHeader(),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildTypeToggle(),
+                      TransactionTypeToggle(
+                        isExpense: _isExpense,
+                        onChanged: (value) =>
+                            setState(() => _isExpense = value),
+                      ),
                       const SizedBox(height: 24),
-                      _buildAmountInput(),
+                      AmountInputField(controller: _amountController),
                       const SizedBox(height: 24),
                       _buildCategoryDropdown(),
                       const SizedBox(height: 16),
                       _buildAccountDropdown(),
                       const SizedBox(height: 16),
-                      _buildDatePicker(),
+                      DatePickerField(
+                        selectedDate: _selectedDate,
+                        onTap: () => _selectDate(context),
+                      ),
                       const SizedBox(height: 16),
-                      _buildNotesInput(),
+                      NotesInputField(controller: _notesController),
                       const SizedBox(height: 16),
-                      _buildReceiptUpload(),
+                      ReceiptUploadButton(
+                        receiptImage: _receiptImage,
+                        onTap: _pickImage,
+                      ),
                       const SizedBox(height: 32),
                       CustomButton.primary(
                         text: 'حفظ المعاملة',
@@ -231,285 +243,33 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: AppTextStyles.buttonSmall.copyWith(
-                color: AppColors.gray600,
-              ),
-            ),
-          ),
-          Text('إضافة معاملة', style: AppTextStyles.h3),
-          const SizedBox(width: 48), // Spacer to balance the "Cancel" button
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isExpense = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _isExpense ? AppColors.expense : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'مصروف',
-                  style: AppTextStyles.button.copyWith(
-                    color: _isExpense ? Colors.white : AppColors.gray600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isExpense = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: !_isExpense ? AppColors.income : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'دخل',
-                  style: AppTextStyles.button.copyWith(
-                    color: !_isExpense ? Colors.white : AppColors.gray600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAmountInput() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.white, Color(0xFFF5F5F5)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Text('المبلغ', style: AppTextStyles.bodySmall),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.balanceAmount.copyWith(fontSize: 32),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: '0',
-              hintStyle: AppTextStyles.balanceAmount.copyWith(
-                fontSize: 32,
-                color: AppColors.gray300,
-              ),
-              suffixText: ' ل.س',
-              suffixStyle: AppTextStyles.h3.copyWith(color: AppColors.gray500),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCategoryDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedCategoryId,
-          hint: Row(
-            children: [
-              const Icon(
-                Icons.category_outlined,
-                color: AppColors.gray400,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text('الفئة', style: AppTextStyles.bodySecondary),
-            ],
-          ),
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.gray600),
-          items: _categories.map((category) {
-            return DropdownMenuItem<String>(
-              value: category.id,
-              child: Text(category.name.value, style: AppTextStyles.body),
-            );
-          }).toList(),
-          onChanged: (val) => setState(() => _selectedCategoryId = val),
-        ),
-      ),
+    return StyledDropdownField<String>(
+      value: _selectedCategoryId,
+      hintText: 'الفئة',
+      hintIcon: Icons.category_outlined,
+      items: _categories.map((category) {
+        return DropdownMenuItem<String>(
+          value: category.id,
+          child: Text(category.name.value, style: AppTextStyles.body),
+        );
+      }).toList(),
+      onChanged: (val) => setState(() => _selectedCategoryId = val),
     );
   }
 
   Widget _buildAccountDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedAccountId,
-          hint: Row(
-            children: [
-              const Icon(
-                Icons.account_balance_wallet_outlined,
-                color: AppColors.gray400,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text('الحساب', style: AppTextStyles.bodySecondary),
-            ],
-          ),
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.gray600),
-          items: _accounts.map((account) {
-            return DropdownMenuItem<String>(
-              value: account.id,
-              child: Text(account.name.value, style: AppTextStyles.body),
-            );
-          }).toList(),
-          onChanged: (val) => setState(() => _selectedAccountId = val),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePicker() {
-    return GestureDetector(
-      onTap: () => _selectDate(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              color: AppColors.gray400,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              intl.DateFormat('yyyy-MM-dd').format(_selectedDate),
-              style: AppTextStyles.body,
-            ),
-            const Spacer(),
-            const Icon(Icons.keyboard_arrow_down, color: AppColors.gray600),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotesInput() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: TextField(
-        controller: _notesController,
-        maxLines: 3,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: 'ملاحظات...',
-          hintStyle: AppTextStyles.bodySecondary,
-          icon: const Icon(Icons.notes, color: AppColors.gray400, size: 20),
-        ),
-        style: AppTextStyles.body,
-      ),
-    );
-  }
-
-  Widget _buildReceiptUpload() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.gray300.withOpacity(0.5),
-            style: BorderStyle.solid,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _receiptImage != null
-                  ? Icons.check_circle
-                  : Icons.camera_alt_outlined,
-              color: _receiptImage != null
-                  ? AppColors.primaryMain
-                  : AppColors.gray600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _receiptImage != null ? 'تم إضافة الصورة' : 'إضافة صورة الإيصال',
-              style: AppTextStyles.buttonSmall.copyWith(
-                color: _receiptImage != null
-                    ? AppColors.primaryMain
-                    : AppColors.gray600,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return StyledDropdownField<String>(
+      value: _selectedAccountId,
+      hintText: 'الحساب',
+      hintIcon: Icons.account_balance_wallet_outlined,
+      items: _accounts.map((account) {
+        return DropdownMenuItem<String>(
+          value: account.id,
+          child: Text(account.name.value, style: AppTextStyles.body),
+        );
+      }).toList(),
+      onChanged: (val) => setState(() => _selectedAccountId = val),
     );
   }
 }
