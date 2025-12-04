@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' as intl;
 import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
@@ -6,57 +7,110 @@ import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 import '../../widgets/transaction_list_item.dart';
 
-class TransactionsListScreen extends StatefulWidget {
+// Domain Imports
+import '../../../domain/entities/transaction_entity.dart';
+import '../../../domain/entities/category_entity.dart';
+import '../../../domain/entities/account_entity.dart';
+import '../../../core/utils/result.dart';
+import '../../../application/providers/usecases_providers.dart';
+
+class TransactionsListScreen extends ConsumerStatefulWidget {
   const TransactionsListScreen({super.key});
 
   @override
-  State<TransactionsListScreen> createState() => _TransactionsListScreenState();
+  ConsumerState<TransactionsListScreen> createState() =>
+      _TransactionsListScreenState();
 }
 
-class _TransactionsListScreenState extends State<TransactionsListScreen> {
+class _TransactionsListScreenState
+    extends ConsumerState<TransactionsListScreen> {
   String _selectedFilter = 'الكل'; // 'الكل', 'مصاريف', 'دخل'
+  List<TransactionEntity> _transactions = [];
+  Map<String, CategoryEntity> _categoriesMap = {};
+  Map<String, AccountEntity> _accountsMap = {};
+  bool _isLoading = true;
 
-  // Dummy data for demonstration
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'category': 'طعام',
-      'amount': 5000.0,
-      'isExpense': true,
-      'date': DateTime.now(),
-      'icon': Icons.fastfood,
-      'color': AppColors.categoryFood,
-    },
-    {
-      'category': 'مواصلات',
-      'amount': 2000.0,
-      'isExpense': true,
-      'date': DateTime.now().subtract(const Duration(days: 1)),
-      'icon': Icons.directions_car,
-      'color': AppColors.categoryTransport,
-    },
-    {
-      'category': 'راتب',
-      'amount': 500000.0,
-      'isExpense': false,
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'icon': Icons.attach_money,
-      'color': AppColors.categorySalary,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  List<Map<String, dynamic>> get _filteredTransactions {
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+
+    // 1. Fetch Dependencies (Categories & Accounts)
+    final categoriesResult = await ref
+        .read(getCategoriesUseCaseProvider)
+        .execute();
+    final accountsResult = await ref.read(getAccountsUseCaseProvider).execute();
+
+    if (categoriesResult is Success) {
+      final categories =
+          (categoriesResult as Success<List<CategoryEntity>>).value;
+      _categoriesMap = {for (var c in categories) c.id: c};
+    }
+
+    if (accountsResult is Success) {
+      final accounts = (accountsResult as Success<List<AccountEntity>>).value;
+      _accountsMap = {for (var a in accounts) a.id: a};
+    }
+
+    // 2. Fetch Transactions
+    await _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    final result = await ref
+        .read(getTransactionsUseCaseProvider)
+        .recent(limit: 50);
+
+    if (mounted) {
+      setState(() {
+        if (result is Success) {
+          _transactions = (result as Success<List<TransactionEntity>>).value;
+        }
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteTransaction(String id) async {
+    final result = await ref.read(deleteTransactionUseCaseProvider).call(id);
+    if (mounted) {
+      if (result is Success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم حذف المعاملة'),
+            backgroundColor: AppColors.primaryMain,
+          ),
+        );
+        _fetchTransactions();
+      } else {
+        final failure = (result as Fail).failure;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطأ: ${failure.message}'),
+            backgroundColor: AppColors.expense,
+          ),
+        );
+      }
+    }
+  }
+
+  List<TransactionEntity> get _filteredTransactions {
     if (_selectedFilter == 'مصاريف') {
-      return _transactions.where((t) => t['isExpense'] == true).toList();
+      return _transactions.where((t) => t.type.name == 'expense').toList();
     } else if (_selectedFilter == 'دخل') {
-      return _transactions.where((t) => t['isExpense'] == false).toList();
+      return _transactions.where((t) => t.type.name == 'income').toList();
     }
     return _transactions;
   }
 
-  Map<String, List<Map<String, dynamic>>> get _groupedTransactions {
-    final grouped = <String, List<Map<String, dynamic>>>{};
+  Map<String, List<TransactionEntity>> get _groupedTransactions {
+    final grouped = <String, List<TransactionEntity>>{};
     for (var t in _filteredTransactions) {
-      final date = t['date'] as DateTime;
+      final date = t.date.value;
       final key = _getDateKey(date);
       if (!grouped.containsKey(key)) {
         grouped[key] = [];
@@ -79,6 +133,10 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: GradientBackground.dashboard(
         child: SafeArea(
@@ -87,90 +145,94 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
               _buildHeader(),
               _buildFilterBar(),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.paddingMd),
-                  itemCount: _groupedTransactions.length,
-                  itemBuilder: (context, index) {
-                    final key = _groupedTransactions.keys.elementAt(index);
-                    final transactions = _groupedTransactions[key]!;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.paddingSm,
-                          ),
-                          child: Text(
-                            key,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.gray600,
-                            ),
-                          ),
+                child: _transactions.isEmpty
+                    ? Center(
+                        child: Text(
+                          'لا توجد معاملات',
+                          style: AppTextStyles.bodySecondary,
                         ),
-                        ...transactions.map(
-                          (t) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppSpacing.paddingSm,
-                            ),
-                            child: Dismissible(
-                              key: ValueKey(t.hashCode),
-                              background: Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFFC107),
-                                      Color(0xFFFFD54F),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+                        itemCount: _groupedTransactions.length,
+                        itemBuilder: (context, index) {
+                          final key = _groupedTransactions.keys.elementAt(
+                            index,
+                          );
+                          final transactions = _groupedTransactions[key]!;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.paddingSm,
+                                ),
+                                child: Text(
+                                  key,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.gray600,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
                                 ),
                               ),
-                              secondaryBackground: Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFE53935),
-                                      Color(0xFFF44336),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                              ...transactions.map((t) {
+                                final category = _categoriesMap[t.categoryId];
+                                final categoryName =
+                                    category?.name.value ?? 'غير معروف';
+                                Color categoryColor = AppColors.gray400;
+                                if (category != null) {
+                                  final hexString = category.color.hex
+                                      .replaceFirst('#', '');
+                                  categoryColor = Color(
+                                    int.parse('FF$hexString', radix: 16),
+                                  );
+                                }
+                                const categoryIcon = Icons.category;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.paddingSm,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.only(left: 20),
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              child: TransactionListItem(
-                                categoryName: t['category'],
-                                categoryColor: t['color'],
-                                categoryIcon: t['icon'],
-                                amount: t['amount'],
-                                isExpense: t['isExpense'],
-                                date: t['date'],
-                                onTap: () {
-                                  // Navigate to details
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                                  child: Dismissible(
+                                    key: ValueKey(t.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFE53935),
+                                            Color(0xFFF44336),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      alignment: Alignment.centerLeft,
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    onDismissed: (direction) =>
+                                        _deleteTransaction(t.id),
+                                    child: TransactionListItem(
+                                      categoryName: categoryName,
+                                      categoryColor: categoryColor,
+                                      categoryIcon: categoryIcon,
+                                      amount: t.amount.toMajor(),
+                                      isExpense: t.type.name == 'expense',
+                                      date: t.date.value,
+                                      onTap: () {},
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          );
+                        },
+                      ),
               ),
             ],
           ),

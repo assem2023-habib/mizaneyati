@@ -1,35 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
 import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 
-class AccountsScreen extends StatelessWidget {
+// Domain Imports
+import '../../../domain/entities/account_entity.dart';
+import '../../../domain/models/account_type.dart';
+import '../../../core/utils/result.dart';
+import '../../../application/providers/usecases_providers.dart';
+
+class AccountsScreen extends ConsumerStatefulWidget {
   const AccountsScreen({super.key});
 
   @override
+  ConsumerState<AccountsScreen> createState() => _AccountsScreenState();
+}
+
+class _AccountsScreenState extends ConsumerState<AccountsScreen> {
+  List<AccountEntity> _accounts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccounts();
+  }
+
+  Future<void> _loadAccounts() async {
+    setState(() => _isLoading = true);
+
+    final result = await ref.read(getAccountsUseCaseProvider).execute();
+
+    if (mounted) {
+      setState(() {
+        if (result is Success) {
+          _accounts = (result as Success<List<AccountEntity>>).value;
+        }
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Dummy data for accounts
-    final List<Map<String, dynamic>> accounts = [
-      {
-        'name': 'نقدي',
-        'balance': '150,000',
-        'type': 'cash',
-        'icon': Icons.attach_money,
-      },
-      {
-        'name': 'البنك التجاري',
-        'balance': '2,500,000',
-        'type': 'bank',
-        'icon': Icons.account_balance,
-      },
-      {
-        'name': 'بطاقة ائتمان',
-        'balance': '-50,000',
-        'type': 'card',
-        'icon': Icons.credit_card,
-      },
-    ];
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       body: GradientBackground.dashboard(
@@ -38,20 +56,28 @@ class AccountsScreen extends StatelessWidget {
             children: [
               _buildHeader(context),
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.paddingMd),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppSpacing.gapMd,
-                    mainAxisSpacing: AppSpacing.gapMd,
-                    childAspectRatio: 0.85,
-                  ),
-                  itemCount: accounts.length,
-                  itemBuilder: (context, index) {
-                    final account = accounts[index];
-                    return _buildAccountCard(account);
-                  },
-                ),
+                child: _accounts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'لا توجد حسابات',
+                          style: AppTextStyles.bodySecondary,
+                        ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: AppSpacing.gapMd,
+                              mainAxisSpacing: AppSpacing.gapMd,
+                              childAspectRatio: 0.85,
+                            ),
+                        itemCount: _accounts.length,
+                        itemBuilder: (context, index) {
+                          final account = _accounts[index];
+                          return _buildAccountCard(account);
+                        },
+                      ),
               ),
             ],
           ),
@@ -87,32 +113,36 @@ class AccountsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountCard(Map<String, dynamic> account) {
-    final type = account['type'];
+  Widget _buildAccountCard(AccountEntity account) {
+    final type = account.type;
     Gradient gradient;
+    IconData icon;
 
     switch (type) {
-      case 'bank':
+      case AccountType.bank:
         gradient = const LinearGradient(
           colors: [Color(0xFF2196F3), Color(0xFF1565C0)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
+        icon = Icons.account_balance;
         break;
-      case 'card':
+      case AccountType.card:
         gradient = const LinearGradient(
           colors: [Color(0xFF9C27B0), Color(0xFF6A1B9A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
+        icon = Icons.credit_card;
         break;
-      case 'cash':
+      case AccountType.cash:
       default:
         gradient = const LinearGradient(
           colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
+        icon = Icons.attach_money;
         break;
     }
 
@@ -139,13 +169,13 @@ class AccountsScreen extends StatelessWidget {
               color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(account['icon'], color: Colors.white, size: 24),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                account['name'],
+                account.name.value,
                 style: AppTextStyles.body.copyWith(
                   color: Colors.white.withOpacity(0.9),
                   fontWeight: FontWeight.bold,
@@ -153,7 +183,7 @@ class AccountsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${account['balance']} ل.س',
+                '${account.balance.toMajor().toStringAsFixed(0)} ل.س',
                 style: AppTextStyles.h3.copyWith(
                   color: Colors.white,
                   fontSize: 18,

@@ -1,63 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
 import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 import '../../widgets/custom_button.dart';
 
-class CategoriesScreen extends StatelessWidget {
+// Domain Imports
+import '../../../domain/entities/category_entity.dart';
+import '../../../core/utils/result.dart';
+import '../../../application/providers/usecases_providers.dart';
+
+class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
 
   @override
+  ConsumerState<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
+  List<CategoryEntity> _categories = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() => _isLoading = true);
+
+    final result = await ref.read(getCategoriesUseCaseProvider).execute();
+
+    if (mounted) {
+      setState(() {
+        if (result is Success) {
+          _categories = (result as Success<List<CategoryEntity>>).value;
+        }
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Dummy data for categories
-    final List<Map<String, dynamic>> categories = [
-      {
-        'name': 'طعام',
-        'icon': Icons.restaurant,
-        'color': AppColors.categoryFood,
-      },
-      {
-        'name': 'مواصلات',
-        'icon': Icons.directions_car,
-        'color': AppColors.categoryTransport,
-      },
-      {
-        'name': 'تسوق',
-        'icon': Icons.shopping_bag,
-        'color': AppColors.categoryShopping,
-      },
-      {
-        'name': 'ترفيه',
-        'icon': Icons.movie,
-        'color': AppColors.categoryEntertainment,
-      },
-      {
-        'name': 'صحة',
-        'icon': Icons.favorite,
-        'color': AppColors.categoryHealth,
-      },
-      {
-        'name': 'راتب',
-        'icon': Icons.attach_money,
-        'color': AppColors.categorySalary,
-      },
-      {
-        'name': 'فواتير',
-        'icon': Icons.receipt,
-        'color': AppColors.categoryBills,
-      },
-      {
-        'name': 'تعليم',
-        'icon': Icons.school,
-        'color': AppColors.categoryEducation,
-      },
-      {
-        'name': 'أخرى',
-        'icon': Icons.more_horiz,
-        'color': AppColors.categoryOther,
-      },
-    ];
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       body: GradientBackground.dashboard(
@@ -66,20 +56,28 @@ class CategoriesScreen extends StatelessWidget {
             children: [
               _buildHeader(context),
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.paddingMd),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: AppSpacing.gapMd,
-                    mainAxisSpacing: AppSpacing.gapMd,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-                    return _buildCategoryCard(category);
-                  },
-                ),
+                child: _categories.isEmpty
+                    ? Center(
+                        child: Text(
+                          'لا توجد فئات',
+                          style: AppTextStyles.bodySecondary,
+                        ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: AppSpacing.gapMd,
+                              mainAxisSpacing: AppSpacing.gapMd,
+                              childAspectRatio: 1.0,
+                            ),
+                        itemCount: _categories.length,
+                        itemBuilder: (context, index) {
+                          final category = _categories[index];
+                          return _buildCategoryCard(category);
+                        },
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.paddingMd),
@@ -114,8 +112,14 @@ class CategoriesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(Map<String, dynamic> category) {
-    final color = category['color'] as Color;
+  Widget _buildCategoryCard(CategoryEntity category) {
+    // Convert hex color to Flutter Color
+    final hexString = category.color.hex.replaceFirst('#', '');
+    final color = Color(int.parse('FF$hexString', radix: 16));
+    // For icon, we use a default since IconValue may need a mapper
+    // In a real app, you'd map IconValue.value to IconData
+    const icon = Icons.category;
+
     return Container(
       decoration: BoxDecoration(
         color: color,
@@ -131,10 +135,10 @@ class CategoriesScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(category['icon'], color: Colors.white, size: 32),
+          const Icon(icon, color: Colors.white, size: 32),
           const SizedBox(height: 8),
           Text(
-            category['name'],
+            category.name.value,
             style: AppTextStyles.bodySmall.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,

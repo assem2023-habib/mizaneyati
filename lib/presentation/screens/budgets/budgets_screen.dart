@@ -1,35 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
 import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 
-class BudgetsScreen extends StatelessWidget {
+// Domain Imports
+import '../../../domain/entities/budget_entity.dart';
+import '../../../domain/entities/category_entity.dart';
+import '../../../core/utils/result.dart';
+import '../../../application/providers/usecases_providers.dart';
+import '../../../domain/usecases/budget/get_budget_status_usecase.dart';
+
+class BudgetsScreen extends ConsumerStatefulWidget {
   const BudgetsScreen({super.key});
 
   @override
+  ConsumerState<BudgetsScreen> createState() => _BudgetsScreenState();
+}
+
+class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
+  List<BudgetStatus> _budgetStatuses = [];
+  Map<String, CategoryEntity> _categoriesMap = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBudgets();
+  }
+
+  Future<void> _loadBudgets() async {
+    setState(() => _isLoading = true);
+
+    // Fetch categories for name lookup
+    final categoriesResult = await ref
+        .read(getCategoriesUseCaseProvider)
+        .execute();
+    if (categoriesResult is Success) {
+      final categories =
+          (categoriesResult as Success<List<CategoryEntity>>).value;
+      _categoriesMap = {for (var c in categories) c.id: c};
+    }
+
+    // First get all budgets, then get status for each
+    final budgetsResult = await ref.read(getBudgetsUseCaseProvider).execute();
+
+    if (budgetsResult is Success) {
+      final budgets = (budgetsResult as Success<List<BudgetEntity>>).value;
+      final statuses = <BudgetStatus>[];
+
+      for (final budget in budgets) {
+        final statusResult = await ref
+            .read(getBudgetStatusUseCaseProvider)
+            .call(budget.id);
+        if (statusResult is Success) {
+          statuses.add((statusResult as Success<BudgetStatus>).value);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _budgetStatuses = statuses;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Dummy data for budgets
-    final List<Map<String, dynamic>> budgets = [
-      {
-        'category': 'طعام',
-        'spent': 125000.0,
-        'limit': 200000.0,
-        'icon': Icons.restaurant,
-      },
-      {
-        'category': 'تسوق',
-        'spent': 180000.0,
-        'limit': 150000.0,
-        'icon': Icons.shopping_bag,
-      },
-      {
-        'category': 'مواصلات',
-        'spent': 45000.0,
-        'limit': 50000.0,
-        'icon': Icons.directions_car,
-      },
-    ];
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       body: GradientBackground.dashboard(
@@ -38,14 +85,20 @@ class BudgetsScreen extends StatelessWidget {
             children: [
               _buildHeader(context),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.paddingMd),
-                  itemCount: budgets.length,
-                  itemBuilder: (context, index) {
-                    final budget = budgets[index];
-                    return _buildBudgetCard(budget);
-                  },
-                ),
+                child: _budgetStatuses.isEmpty
+                    ? Center(
+                        child: Text(
+                          'لا توجد ميزانيات',
+                          style: AppTextStyles.bodySecondary,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+                        itemCount: _budgetStatuses.length,
+                        itemBuilder: (context, index) {
+                          return _buildBudgetCard(_budgetStatuses[index]);
+                        },
+                      ),
               ),
             ],
           ),
@@ -77,11 +130,11 @@ class BudgetsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBudgetCard(Map<String, dynamic> budget) {
-    final spent = budget['spent'] as double;
-    final limit = budget['limit'] as double;
-    final percentage = spent / limit;
-    final isExceeded = percentage > 1.0;
+  Widget _buildBudgetCard(BudgetStatus status) {
+    final spent = status.spentMinor / 100.0;
+    final limit = status.budget.limitAmount.toMajor();
+    final percentage = status.progress;
+    final isExceeded = status.isExceeded;
     final isWarning = percentage > 0.8 && !isExceeded;
 
     Color progressColor;
@@ -92,6 +145,10 @@ class BudgetsScreen extends StatelessWidget {
     } else {
       progressColor = AppColors.income;
     }
+
+    // Get category name from map
+    final categoryName =
+        _categoriesMap[status.budget.categoryId]?.name.value ?? 'ميزانية';
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.gapMd),
@@ -124,15 +181,15 @@ class BudgetsScreen extends StatelessWidget {
                       color: AppColors.primaryMain.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      budget['icon'],
+                    child: const Icon(
+                      Icons.account_balance_wallet,
                       color: AppColors.primaryMain,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    budget['category'],
+                    categoryName,
                     style: AppTextStyles.body.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

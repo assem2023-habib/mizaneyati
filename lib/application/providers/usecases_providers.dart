@@ -12,15 +12,18 @@ import '../../domain/usecases/transaction/get_transactions_usecase.dart';
 import '../../domain/usecases/account/create_account_usecase.dart';
 import '../../domain/usecases/account/update_account_usecase.dart';
 import '../../domain/usecases/account/delete_account_usecase.dart';
+import '../../domain/usecases/account/get_accounts_usecase.dart';
 
 // Category UseCases
 import '../../domain/usecases/category/create_category_usecase.dart';
 import '../../domain/usecases/category/update_category_usecase.dart';
 import '../../domain/usecases/category/delete_category_usecase.dart';
+import '../../domain/usecases/category/get_categories_usecase.dart';
 
 // Budget UseCases
 import '../../domain/usecases/budget/create_budget_usecase.dart';
 import '../../domain/usecases/budget/get_budget_status_usecase.dart';
+import '../../domain/usecases/budget/get_budgets_usecase.dart';
 
 // --- Transaction UseCases ---
 
@@ -69,6 +72,10 @@ final deleteAccountUseCaseProvider = Provider<DeleteAccountUseCase>((ref) {
   return DeleteAccountUseCase(ref.watch(accountRepositoryProvider));
 });
 
+final getAccountsUseCaseProvider = Provider<GetAccountsUseCase>((ref) {
+  return GetAccountsUseCase(ref.watch(accountRepositoryProvider));
+});
+
 // --- Category UseCases ---
 
 final createCategoryUseCaseProvider = Provider<CreateCategoryUseCase>((ref) {
@@ -83,6 +90,10 @@ final deleteCategoryUseCaseProvider = Provider<DeleteCategoryUseCase>((ref) {
   return DeleteCategoryUseCase(ref.watch(categoryRepositoryProvider));
 });
 
+final getCategoriesUseCaseProvider = Provider<GetCategoriesUseCase>((ref) {
+  return GetCategoriesUseCase(ref.watch(categoryRepositoryProvider));
+});
+
 // --- Budget UseCases ---
 
 final createBudgetUseCaseProvider = Provider<CreateBudgetUseCase>((ref) {
@@ -94,4 +105,8 @@ final createBudgetUseCaseProvider = Provider<CreateBudgetUseCase>((ref) {
 
 final getBudgetStatusUseCaseProvider = Provider<GetBudgetStatusUseCase>((ref) {
   return GetBudgetStatusUseCase(ref.watch(budgetRepositoryProvider));
+});
+
+final getBudgetsUseCaseProvider = Provider<GetBudgetsUseCase>((ref) {
+  return GetBudgetsUseCase(ref.watch(budgetRepositoryProvider));
 });
