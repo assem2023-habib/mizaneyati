@@ -259,7 +259,15 @@ class _TransactionsListScreenState
           Text('المعاملات', style: AppTextStyles.h2),
           IconButton(
             icon: const Icon(Icons.search, color: AppColors.primaryDark),
-            onPressed: () {},
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: TransactionSearchDelegate(
+                  transactions: _transactions,
+                  categoriesMap: _categoriesMap,
+                ),
+              );
+            },
           ),
         ],
       ),

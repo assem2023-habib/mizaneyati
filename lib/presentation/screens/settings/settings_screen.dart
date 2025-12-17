@@ -93,10 +93,138 @@ class SettingsScreen extends ConsumerWidget {
       );
 
       if (result != null) {
-        // TODO: Implement actual CSV parsing and database insertion
-        // This requires careful handling of IDs and existing data
+        final file = File(result.files.single.path!);
+        final content = await file.readAsString();
+        final lines = content.split('\n');
+
+        if (lines.length <= 1) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('الملف فارغ أو لا يحتوي على بيانات')),
+          );
+          return;
+        }
+
+        int successCount = 0;
+        int failCount = 0;
+        final addTransactionUseCase = ref.read(addTransactionUseCaseProvider);
+
+        // Show loading indicator
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (c) => const Center(child: CircularProgressIndicator()),
+        );
+
+        // Skip header
+        for (var i = 1; i < lines.length; i++) {
+          final line = lines[i].trim();
+          if (line.isEmpty) continue;
+
+          try {
+            // CSV parsing (basic split by comma, handling quotes for note if needed)
+            // Note: This is a simple parser. For robust parsing, use a csv package.
+            // Assuming the export format: ID,Amount,Type,Category,Account,ToAccount,Date,Note
+            // Note might contain commas, so we need to be careful.
+            // But export used: "${tx.note.value.replaceAll('"', '""')}"
+            // A simple split(',') will break if note has commas.
+            // For MVP without adding 'csv' package dependency, we'll assume simple notes or use regex.
+            
+            // Let's try to add 'csv' package? No, user said "Don't add files unless necessary".
+            // I can use a simple regex for CSV or just split if I know the structure.
+            // Export format: ID,Amount,Type,Category,Account,ToAccount,Date,"Note"
+            
+            final parts = line.split(',');
+            if (parts.length < 8) {
+               // Handle case where note might be split
+               // This is tricky without a proper parser.
+               // Let's try to parse from the beginning.
+            }
+            
+            // Safer manual parsing logic:
+            final values = <String>[];
+            bool inQuotes = false;
+            StringBuffer currentValue = StringBuffer();
+            
+            for (int j = 0; j < line.length; j++) {
+              final char = line[j];
+              if (char == '"') {
+                if (j + 1 < line.length && line[j+1] == '"') {
+                  currentValue.write('"');
+                  j++; // skip escaped quote
+                } else {
+                  inQuotes = !inQuotes;
+                }
+              } else if (char == ',' && !inQuotes) {
+                values.add(currentValue.toString());
+                currentValue.clear();
+              } else {
+                currentValue.write(char);
+              }
+            }
+            values.add(currentValue.toString());
+
+            if (values.length < 8) {
+              failCount++;
+              continue;
+            }
+
+            // Parse values
+            // 0: ID (ignored)
+            // 1: Amount (Major)
+            final amountMajor = double.tryParse(values[1]) ?? 0.0;
+            final amountMinor = (amountMajor * 100).round();
+            
+            // 2: Type
+            final typeStr = values[2];
+            final type = TransactionType.values.firstWhere(
+              (e) => e.name == typeStr,
+              orElse: () => TransactionType.expense,
+            );
+            
+            // 3: CategoryId
+            final categoryId = values[3];
+            
+            // 4: AccountId
+            final accountId = values[4];
+            
+            // 5: ToAccountId
+            final toAccountId = values[5].isEmpty ? null : values[5];
+            
+            // 6: Date
+            final dateStr = values[6];
+            final date = DateTime.tryParse(dateStr) ?? DateTime.now();
+            
+            // 7: Note
+            final note = values[7];
+
+            final res = await addTransactionUseCase.call(
+              amountMinor: amountMinor,
+              type: type,
+              categoryId: categoryId,
+              accountId: accountId,
+              date: date,
+              note: note,
+              toAccountId: toAccountId,
+            );
+
+            if (res is Success) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (e) {
+            failCount++;
+          }
+        }
+
+        // Hide loading
+        Navigator.of(context).pop();
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم اختيار الملف. وظيفة الاستيراد قيد التطوير.')),
+          SnackBar(
+            content: Text('تم الاستيراد: $successCount ناجح، $failCount فاشل'),
+            backgroundColor: failCount > 0 ? Colors.orange : Colors.green,
+          ),
         );
       }
     } catch (e) {
