@@ -6,6 +6,7 @@ import '../../styles/app_text_styles.dart';
 import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 import '../../widgets/transaction_list_item.dart';
+import '../transaction_details/transaction_details_screen.dart';
 
 // Domain Imports
 import '../../../domain/entities/transaction_entity.dart';
@@ -187,7 +188,15 @@ class _TransactionsListScreenState
                                     int.parse('FF$hexString', radix: 16),
                                   );
                                 }
-                                const categoryIcon = Icons.category;
+                                IconData categoryIcon = Icons.category;
+                                if (category != null) {
+                                  try {
+                                    final codePoint = int.parse(category.icon.name);
+                                    categoryIcon = IconData(codePoint, fontFamily: 'MaterialIcons');
+                                  } catch (e) {
+                                    // Keep default
+                                  }
+                                }
 
                                 return Padding(
                                   padding: const EdgeInsets.only(
@@ -313,6 +322,99 @@ class _TransactionsListScreenState
           ),
         ),
       ),
+    );
+  }
+}
+
+class TransactionSearchDelegate extends SearchDelegate {
+  final List<TransactionEntity> transactions;
+  final Map<String, CategoryEntity> categoriesMap;
+
+  TransactionSearchDelegate({
+    required this.transactions,
+    required this.categoriesMap,
+  });
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildList(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildList(context);
+  }
+
+  Widget _buildList(BuildContext context) {
+    final filtered = transactions.where((t) {
+      final note = t.note.value.toLowerCase();
+      final amount = t.amount.toMajor().toString();
+      final category = categoriesMap[t.categoryId]?.name.value.toLowerCase() ?? '';
+      final q = query.toLowerCase();
+      
+      return note.contains(q) || amount.contains(q) || category.contains(q);
+    }).toList();
+
+    return ListView.builder(
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final t = filtered[index];
+        final category = categoriesMap[t.categoryId];
+        final categoryName = category?.name.value ?? 'غير معروف';
+        Color categoryColor = AppColors.gray400;
+        if (category != null) {
+          final hexString = category.color.hex.replaceFirst('#', '');
+          categoryColor = Color(int.parse('FF$hexString', radix: 16));
+        }
+        IconData categoryIcon = Icons.category;
+        if (category != null) {
+          try {
+            final codePoint = int.parse(category.icon.name);
+            categoryIcon = IconData(codePoint, fontFamily: 'MaterialIcons');
+          } catch (e) {
+            // Keep default
+          }
+        }
+
+        return TransactionListItem(
+          categoryName: categoryName,
+          categoryColor: categoryColor,
+          categoryIcon: categoryIcon,
+          amount: t.amount.toMajor(),
+          isExpense: t.type.name == 'expense',
+          date: t.date.value,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TransactionDetailsScreen(transaction: t),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

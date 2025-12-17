@@ -59,6 +59,9 @@ dependencies:
   # File picker (اختياري - للتصدير والاستيراد)
   file_picker: ^8.0.0
 
+  # Shared Preferences
+  shared_preferences: ^2.2.2
+
   # Share (تصدير تقارير)
   share_plus: ^10.0.2
 

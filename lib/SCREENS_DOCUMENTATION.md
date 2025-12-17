@@ -1575,6 +1575,209 @@ padding: 1rem
 - **الأيقونات:** `Camera`, `ChevronDown`, `Calendar` (Lucide React)
   - لون الأيقونات النشطة: `#2E7D32`
 
+### 📏 المسافات والأبعاد
+
+#### الحاوية الرئيسية
+
+```css
+min-height: 100vh
+background: linear-gradient(180deg, #FFFFFF 0%, #E3F2FD 100%)
+```
+
+#### الترويسة (Header)
+
+```css
+padding: 1.5rem /* p-6 */
+padding-bottom: 1rem /* pb-4 */
+
+/* العناصر الداخلية */
+display: flex
+align-items: center
+justify-content: space-between
+margin-bottom: 1.5rem /* mb-6 */
+```
+
+#### مبدل النوع (Type Toggle)
+
+```css
+border-radius: 20px
+padding: 4px /* p-1 */
+background-color: #F5F5F5
+
+/* كل زر */
+flex: 1
+padding: 0.75rem 0 /* py-3 */
+border-radius: 16px
+transition: all
+```
+
+#### حقول الإدخال (Input Fields)
+
+```css
+padding: 1.5rem /* p-6 */
+border-radius: 20px
+background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
+margin-bottom: 1rem /* space-y-4 */
+```
+
+#### حقل المبلغ (Amount)
+
+```css
+font-size: 2rem /* 32px */
+color: #FFC107
+background: transparent
+width: 100%
+outline: none
+```
+
+#### منتقي الفئة/الحساب (Selectors)
+
+```css
+/* الحاوية */
+position: relative
+
+/* العنصر */
+width: 100%
+padding: 1rem /* p-4 */
+border-radius: 14px
+background-color: white
+border: 1px solid rgba(229, 231, 235, 1) /* gray-200 */
+appearance: none
+padding-left: 40px /* مساحة للأيقونة */
+
+/* أيقونة السهم */
+position: absolute
+left: 1rem
+top: 50%
+transform: translateY(-50%)
+color: #9CA3AF /* gray-400 */
+size: 20px
+```
+
+#### منتقي التاريخ (Date Picker)
+
+```css
+display: flex
+align-items: center
+gap: 0.75rem /* gap-3 */
+
+/* الأيقونة */
+color: #2E7D32
+size: 20px
+
+/* حقل الإدخال */
+flex: 1
+outline: none
+background: transparent
+```
+
+#### حقل الملاحظات (Notes)
+
+```css
+width: 100%
+padding: 1rem /* p-4 */
+border-radius: 14px
+background-color: white
+border: 1px solid rgba(229, 231, 235, 1)
+outline: none
+resize: none
+rows: 3
+```
+
+#### زر إضافة صورة الإيصال
+
+```css
+width: 100%
+padding: 1.5rem /* p-6 */
+border-radius: 20px
+background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
+display: flex
+align-items: center
+justify-content: center
+gap: 0.75rem /* gap-3 */
+
+/* الأيقونة */
+size: 24px
+color: #2E7D32
+
+/* النص */
+color: #374151 /* gray-700 */
+```
+
+#### زر الحفظ (Submit)
+
+```css
+width: 100%
+padding: 1rem 0 /* py-4 */
+margin-top: 2rem /* mt-8 */
+margin-bottom: 2rem /* mb-8 */
+background-color: #2E7D32
+color: white
+border-radius: 20px
+box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
+```
+
+### ⚡ التفاعلات والحركات
+
+#### مبدل النوع
+
+```javascript
+// حالة المصروف النشط
+backgroundColor: type === 'expense' ? '#E53935' : 'transparent'
+color: type === 'expense' ? '#FFF' : '#666'
+
+// حالة الدخل النشط
+backgroundColor: type === 'income' ? '#4CAF50' : 'transparent'
+color: type === 'income' ? '#FFF' : '#666'
+
+// الانتقال
+transition: all (smooth transition between states)
+```
+
+#### زر الحفظ
+
+```javascript
+// عند عدم وجود مبلغ
+if (!amount) return; // لا يتم الإرسال
+
+// التأثير البصري
+transition: all
+:hover {
+  opacity: 0.9;
+}
+```
+
+### 🎨 ملخص لوحة الألوان
+
+```javascript
+const addTransactionColors = {
+  background: {
+    gradient: "linear-gradient(180deg, #FFFFFF 0%, #E3F2FD 100%)",
+  },
+  typeToggle: {
+    background: "#F5F5F5",
+    expense: "#E53935",
+    income: "#4CAF50",
+    inactive: "transparent",
+    textActive: "#FFFFFF",
+    textInactive: "#666666",
+  },
+  inputFields: {
+    background: "linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)",
+    shadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+  },
+  amount: "#FFC107",
+  icon: "#2E7D32",
+  submitButton: {
+    background: "#2E7D32",
+    text: "#FFFFFF",
+    shadow: "0 4px 12px rgba(46, 125, 50, 0.3)",
+  },
+};
+```
+
 ---
 
 ## 📊 شاشة Transactions List - التوثيق الكامل
@@ -1604,21 +1807,85 @@ padding: 1rem
 └─────────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان
+### 🎨 نظام الألوان الكامل
 
-#### 1. الخلفية
+#### 1. الخلفية الرئيسية
 
 ```css
 background: linear-gradient(180deg, #dff1ff 0%, #f9fbfd 100%);
-/* + دوائر ضبابية (Blurry Circles) كما في Dashboard */
 ```
 
-#### 2. شريط التصفية (Filter Bar)
+#### 2. الدوائر الضبابية في الخلفية (Blurry Circles)
+
+**دائرة 1 - أعلى يسار:**
+
+```css
+width: 300px
+height: 300px
+background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)
+filter: blur(60px)
+opacity: 0.3
+position: {
+  top: 5%,
+  left: 5%
+}
+```
+
+**دائرة 2 - أسفل يمين:**
+
+```css
+width: 200px
+height: 200px
+background: radial-gradient(circle, rgba(179, 229, 252, 0.6) 0%, transparent 70%)
+filter: blur(40px)
+opacity: 0.3
+position: {
+  bottom: 30%,
+  right: 10%
+}
+```
+
+#### 3. رأس الصفحة (Glassmorphic Header)
+
+```css
+padding: 1.5rem /* p-6 */
+
+/* الحاوية الداخلية */
+background: rgba(255, 255, 255, 0.4)
+backdrop-filter: blur(24px)
+border-radius: 32px
+border: 1px solid rgba(255, 255, 255, 0.6)
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08)
+padding: 1.5rem
+```
+
+**العنوان:**
+
+```css
+text-align: center
+margin-bottom: 1rem /* mb-4 */
+color: #2E7D32
+```
+
+#### 4. شريط التصفية (Filter Bar)
+
+```css
+display: flex
+gap: 0.5rem /* gap-2 */
+justify-content: center
+```
+
+**حالات الأزرار:**
 
 ```css
 /* الزر النشط (الكل) */
 background: linear-gradient(135deg, #2E7D32 0%, #60AD5E 100%)
+color: #FFFFFF
+border: 1px solid rgba(255, 255, 255, 0.7)
 box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
+padding: 0.625rem 1.25rem /* px-5 py-2.5 */
+border-radius: 9999px /* rounded-full */
+transition: all
 
 /* الزر النشط (مصاريف) */
 background: linear-gradient(135deg, #E53935 0%, #F44336 100%)
@@ -1630,36 +1897,272 @@ box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3)
 
 /* الزر غير النشط */
 background: rgba(255, 255, 255, 0.6)
-color: #666
+color: #666666
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)
 ```
 
-#### 3. بطاقة المعاملة (Transaction Item)
+#### 5. رأس مجموعة التاريخ (Date Group Header)
 
 ```css
+display: inline-block
+padding: 0.5rem 1rem /* px-4 py-2 */
+margin-bottom: 0.75rem /* mb-3 */
+border-radius: 9999px /* rounded-full */
+background: rgba(255, 255, 255, 0.5)
+backdrop-filter: blur(16px)
+border: 1px solid rgba(255, 255, 255, 0.7)
+
+/* النص */
+color: #374151 /* gray-700 */
+```
+
+**تنسيقات التاريخ:**
+
+- `اليوم` - إذا كان اليوم الحالي
+- `أمس` - إذا كان البارحة
+- `يوم شهر` (مثل: ٣ ديسمبر) - للتواريخ الأقدم
+
+#### 6. بطاقة المعاملة (Transaction Card)
+
+```css
+/* الحاوية الخارجية */
+position: relative
+overflow: hidden
+border-radius: 20px
+
+/* البطاقة الرئيسية */
+position: relative
+padding: 1rem /* p-4 */
+display: flex
+align-items: center
+gap: 1rem /* gap-4 */
 background: rgba(255, 255, 255, 0.6)
 backdrop-filter: blur(16px)
 border: 1px solid rgba(255, 255, 255, 0.7)
 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08)
-border-radius: 20px
+transition: transform
+cursor: pointer
 ```
 
-#### 4. إجراءات السحب (Swipe Actions)
+**أيقونة الفئة:**
 
 ```css
-/* تعديل */
-background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%)
-icon: Edit2 (White)
+/* الدائرة الخارجية */
+width: 56px /* w-14 */
+height: 56px /* h-14 */
+border-radius: 9999px
+background: linear-gradient(135deg, ${categoryColor}40 0%, ${categoryColor}20 100%)
+box-shadow: 0 4px 12px ${categoryColor}30
+display: flex
+align-items: center
+justify-content: center
 
-/* حذف */
-background: linear-gradient(135deg, #E53935 0%, #F44336 100%)
-icon: Trash2 (White)
+/* الدائرة الداخلية */
+width: 28px /* w-7 */
+height: 28px /* h-7 */
+border-radius: 9999px
+background-color: ${categoryColor}
+box-shadow: 0 0 12px ${categoryColor}60
 ```
 
-### ⚡ التفاعلات
+**معلومات المعاملة:**
 
-- **السحب (Swipe):** سحب العنصر لليسار للكشف عن أزرار التعديل والحذف.
-- **التصفية:** تبديل فوري للقائمة بناءً على النوع المختار.
-- **التجميع:** تجميع تلقائي للمعاملات حسب التاريخ (اليوم، أمس، التاريخ الكامل).
+```css
+/* الحاوية */
+flex: 1
+
+/* اسم الفئة */
+color: #1F2937 /* gray-800 */
+font-size: 1rem
+
+/* الملاحظات */
+color: #9CA3AF /* gray-400 */
+font-size: 0.875rem /* text-sm */
+margin-top: 0.25rem /* mt-1 */
+```
+
+**المبلغ:**
+
+```css
+/* الحاوية */
+text-align: left
+
+/* المبلغ - مصروف */
+color: #E53935
+font-size: 1.1rem
+text-shadow: 0 2px 8px rgba(229, 57, 53, 0.2)
+
+/* المبلغ - دخل */
+color: #4CAF50
+text-shadow: 0 2px 8px rgba(76, 175, 80, 0.2)
+
+/* العملة */
+color: #9CA3AF /* gray-400 */
+font-size: 0.875rem /* text-sm */
+
+/* السهم */
+color: #D1D5DB /* gray-300 */
+size: 20px
+```
+
+#### 7. إجراءات السحب (Swipe Actions)
+
+```css
+/* الخلفية المخفية */
+position: absolute
+inset: 0
+display: flex
+
+/* زر التعديل */
+flex: 1
+display: flex
+align-items: center
+justify-content: center
+background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%)
+box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3)
+
+/* أيقونة التعديل */
+icon: Edit2 (Lucide React)
+size: 20px
+color: white
+
+/* زر الحذف */
+flex: 1
+display: flex
+align-items: center
+justify-content: center
+background: linear-gradient(135deg, #E53935 0%, #F44336 100%)
+box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3)
+
+/* أيقونة الحذف */
+icon: Trash2 (Lucide React)
+size: 20px
+color: white
+```
+
+**حركة السحب:**
+
+```javascript
+// عند السحب لليسار (أكثر من 50px)
+transform: translateX(120px)
+
+// عند السحب لليمين (أكثر من 50px)
+transform: translateX(0)
+
+// Animation
+transition: transform
+```
+
+### 📏 المسافات والأبعاد الكاملة
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding-bottom: 6rem /* pb-24 */
+position: relative
+overflow: hidden
+
+/* القوائم */
+padding: 0 1.5rem /* px-6 */
+display: flex
+flex-direction: column
+gap: 1.5rem /* space-y-6 */
+
+/* بين المعاملات في نفس اليوم */
+gap: 0.75rem /* space-y-3 */
+```
+
+### ⚡ التفاعلات والحركات
+
+#### 1. الفلترة
+
+```javascript
+const [filterType, setFilterType] =
+  (useState < "all") | "expense" | ("income" > "all");
+
+// تبديل فوري للقائمة بناءً على النوع المختار
+const filteredTransactions =
+  filterType === "all"
+    ? transactions
+    : transactions.filter((t) => t.type === filterType);
+```
+
+#### 2. التجميع حسب التاريخ
+
+```javascript
+const groupByDate = (transactions: Transaction[]) => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const groups: { [key: string]: Transaction[] } = {};
+
+  filteredTransactions.forEach((transaction) => {
+    const transactionDate = transaction.date;
+    let dateLabel = "";
+
+    if (transactionDate.toDateString() === today.toDateString()) {
+      dateLabel = "اليوم";
+    } else if (transactionDate.toDateString() === yesterday.toDateString()) {
+      dateLabel = "أمس";
+    } else {
+      dateLabel = transactionDate.toLocaleDateString("ar-SY", {
+        day: "numeric",
+        month: "long",
+      });
+    }
+
+    if (!groups[dateLabel]) {
+      groups[dateLabel] = [];
+    }
+    groups[dateLabel].push(transaction);
+  });
+
+  return groups;
+};
+```
+
+#### 3. السحب (Touch Gestures)
+
+```javascript
+const [swipedId, setSwipedId] = useState<string | null>(null);
+
+onTouchStart={(e) => {
+  const touch = e.touches[0];
+  const startX = touch.clientX;
+
+  const handleTouchMove = (e: TouchEvent) => {
+    const currentX = e.touches[0].clientX;
+    const diff = startX - currentX;
+
+    if (diff > 50) {
+      setSwipedId(transaction.id);
+    } else if (diff < -50) {
+      setSwipedId(null);
+    }
+  };
+
+  document.addEventListener('touchmove', handleTouchMove);
+  document.addEventListener('touchend', handleTouchEnd);
+}}
+```
+
+### 🔤 الأيقونات المستخدمة
+
+```javascript
+import {
+  Filter, // في شريط الفلترة
+  Trash2, // زر الحذف
+  Edit2, // زر التعديل
+  ChevronLeft, // سهم في المعاملة
+  Home, // شريط التنقل - الرئيسية
+  Receipt, // شريط التنقل - المعاملات (نشط)
+  BarChart3, // شريط التنقل - الإحصاءات
+  Wallet, // شريط التنقل - الميزانيات
+  Settings, // شريط التنقل - الإعدادات
+} from "lucide-react";
+```
 
 ---
 
@@ -1700,53 +2203,424 @@ icon: Trash2 (White)
 └─────────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان والرسوم البيانية
+### 🎨 نظام الألوان الكامل
 
-#### 1. ملخص الشهر (Monthly Summary)
+#### 1. الخلفية الرئيسية
 
 ```css
-/* بطاقة المصاريف */
-background: rgba(229, 57, 53, 0.08)
-text-color: #E53935
-
-/* بطاقة الدخل */
-background: rgba(76, 175, 80, 0.08)
-text-color: #4CAF50
+background: linear-gradient(180deg, #dff1ff 0%, #f9fbfd 100%);
 ```
 
-#### 2. الرسم البياني الدائري (Pie Chart)
-
-- **المكتبة:** Recharts
-- **النوع:** Donut (Inner Radius: 0, Outer Radius: 90)
-- **الألوان:** ديناميكية حسب الفئة (نفس ألوان Dashboard).
-- **التأثير:** `drop-shadow(0 0 12px ${color}60)` لكل شريحة.
-
-#### 3. الرسم البياني العمودي (Bar Chart)
-
-- **التدرج اللوني للأعمدة:**
+#### 2. الدوائر الضبابية في الخلفية (Blurry Circles)
 
 ```css
-linear-gradient(to bottom, #E53935 0%, #F44336 80%)
+/* دائرة 1 - أعلى يمين */
+width: 250px
+height: 250px
+background: radial-gradient(circle, rgba(176, 242, 222, 0.6) 0%, transparent 70%)
+filter: blur(50px)
+opacity: 0.3
+position: {
+  top: 15%,
+  right: 5%
+}
+
+/* دائرة 2 - أسفل يسار */
+width: 200px
+height: 200px
+background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)
+filter: blur(40px)
+opacity: 0.3
+position: {
+  bottom: 25%,
+  left: 10%
+}
 ```
 
-- **نصف القطر:** `[12, 12, 0, 0]` (زوايا علوية دائرية).
-
-#### 4. بطاقة المتوسط اليومي
+#### 3. رأس الصفحة (Glassmorphic Header)
 
 ```css
-background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%)
-box-shadow: 0 12px 32px rgba(255, 193, 7, 0.35)
+padding: 1.5rem /* p-6 */
+padding-bottom: 1rem /* pb-4 */
+
+/* الحاوية الداخلية */
+background: rgba(255, 255, 255, 0.4)
+backdrop-filter: blur(24px)
+border-radius: 32px
+border: 1px solid rgba(255, 255, 255, 0.6)
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08)
+padding: 1.5rem
+
+/* العنوان */
+text-align: center
+margin-bottom: 1.5rem /* mb-6 */
+color: #2E7D32
+```
+
+#### 4. فلتر الفترة الزمنية (Period Filter)
+
+```css
+display: flex
+gap: 0.75rem /* gap-3 */
+justify-content: center
+```
+
+**حالات الأزرار:**
+
+```css
+/* الزر النشط */
+padding: 0.625rem 1.5rem /* px-6 py-2.5 */
+border-radius: 9999px /* rounded-full */
+transition: all
+background: linear-gradient(135deg, #2E7D32 0%, #60AD5E 100%)
+color: #FFFFFF
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
+
+/* الزر غير النشط */
+background: rgba(255, 255, 255, 0.6)
+color: #666666
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)
+```
+
+#### 5. بطاقة ملخص الشهر (Monthly Summary Card)
+
+```css
+/* الحاوية */
+padding: 1.5rem /* p-6 */
+background: rgba(255, 255, 255, 0.6)
+backdrop-filter: blur(16px)
 border-radius: 24px
-text-color: #FFFFFF
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
+
+/* العنوان */
+margin-bottom: 1.5rem /* mb-6 */
+text-align: center
+color: #2E7D32
+
+/* الشبكة */
+display: grid
+grid-template-columns: repeat(3, 1fr)
+gap: 1rem /* gap-4 */
 ```
 
-- **زخرفة:** طبقة شفافة `opacity-20` بتدرج مائل لإضافة لمعان.
+**بطاقة المصاريف:**
 
-### 📊 المنطق والحسابات
+```css
+text-align: center
+padding: 1rem /* p-4 */
+border-radius: 16px /* rounded-2xl */
+background: rgba(229, 57, 53, 0.08)
 
-- **الفلترة الزمنية:** يتم حساب البيانات بناءً على الشهر الحالي والسنة الحالية افتراضياً.
-- **الصافي (Net):** `الدخل - المصاريف`.
-- **المتوسط اليومي:** `إجمالي المصاريف / يوم الشهر الحالي`.
+/* النص */
+color: #E53935
+font-size: 1.25rem
+text-shadow: 0 2px 8px rgba(229, 57, 53, 0.2)
+```
+
+**بطاقة الدخل:**
+
+```css
+background: rgba(76, 175, 80, 0.08)
+
+/* النص */
+color: #4CAF50
+font-size: 1.25rem
+text-shadow: 0 2px 8px rgba(76, 175, 80, 0.2)
+```
+
+**بطاقة الصافي:**
+
+```css
+/* في حالة الربح */
+background: rgba(76, 175, 80, 0.08)
+color: #4CAF50
+
+/* في حالة الخسارة */
+background: rgba(229, 57, 53, 0.08)
+color: #E53935
+```
+
+#### 6. الرسم البياني الدائري (Pie Chart)
+
+```css
+/* الحاوية */
+padding: 1.5rem /* p-6 */
+background: rgba(255, 255, 255, 0.6)
+backdrop-filter: blur(16px)
+border-radius: 24px
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
+```
+
+**الرسم البياني:**
+
+```javascript
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+
+<ResponsiveContainer width="100%" height={250}>
+  <PieChart>
+    <Pie
+      data={categoryData}
+      cx="50%"
+      cy="50%"
+      labelLine={false}
+      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+      outerRadius={90}
+      dataKey="value"
+    >
+      {categoryData.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={entry.color}
+          style={{
+            filter: `drop-shadow(0 0 12px ${entry.color}60)`,
+          }}
+        />
+      ))}
+    </Pie>
+    <Tooltip
+      contentStyle={{
+        background: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(16px)",
+        border: "1px solid rgba(255, 255, 255, 0.7)",
+        borderRadius: "12px",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+      }}
+    />
+  </PieChart>
+</ResponsiveContainer>;
+```
+
+**ألوان الفئات:**
+
+```javascript
+const categoryColors = {
+  طعام: "#FF6B6B",
+  مواصلات: "#4ECDC4",
+  تسوق: "#95E1D3",
+  ترفيه: "#F38181",
+  صحة: "#AA96DA",
+  راتب: "#4CAF50",
+  فواتير: "#FF8E53",
+  تعليم: "#3D5A80",
+  أخرى: "#999999",
+};
+```
+
+#### 7. الرسم البياني العمودي (Bar Chart)
+
+```css
+/* الحاوية */
+padding: 1.5rem /* p-6 */
+background: rgba(255, 255, 255, 0.6)
+backdrop-filter: blur(16px)
+border-radius: 24px
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
+```
+
+**الرسم البياني:**
+
+```javascript
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+<ResponsiveContainer width="100%" height={220}>
+  <BarChart data={weeklyData}>
+    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+    <XAxis dataKey="name" stroke="#666" style={{ fontSize: "0.75rem" }} />
+    <YAxis stroke="#666" style={{ fontSize: "0.75rem" }} />
+    <Tooltip
+      contentStyle={{
+        background: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(16px)",
+        border: "1px solid rgba(255, 255, 255, 0.7)",
+        borderRadius: "12px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+      }}
+    />
+    <Bar dataKey="amount" fill="url(#barGradient)" radius={[12, 12, 0, 0]} />
+    <defs>
+      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#E53935" stopOpacity={1} />
+        <stop offset="100%" stopColor="#F44336" stopOpacity={0.8} />
+      </linearGradient>
+    </defs>
+  </BarChart>
+</ResponsiveContainer>;
+```
+
+**بيانات أيام الأسبوع:**
+
+```javascript
+const weeklyData = Array.from({ length: 7 }, (_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (6 - i));
+  const dayExpenses = transactions
+    .filter(
+      (t) =>
+        t.type === "expense" && t.date.toDateString() === date.toDateString()
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  return {
+    name: [
+      "الأحد",
+      "الاثنين",
+      "الثلاثاء",
+      "الأربعاء",
+      "الخميس",
+      "الجمعة",
+      "السبت",
+    ][date.getDay()].substring(0, 3),
+    amount: dayExpenses,
+  };
+});
+```
+
+#### 8. بطاقة متوسط المصروف اليومي (Daily Average Card)
+
+```css
+/* الحاوية */
+padding: 2rem /* p-8 */
+text-align: center
+position: relative
+overflow: hidden
+background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%)
+border-radius: 24px
+box-shadow: 0 12px 32px rgba(255, 193, 7, 0.35)
+```
+
+**طبقة اللمعان:**
+
+```css
+/* overlay */
+position: absolute
+top: 0
+right: 0
+width: 100%
+height: 100%
+opacity: 0.2 /* opacity-20 */
+pointer-events: none
+background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)
+```
+
+**النصوص:**
+
+```css
+/* النص العلوي */
+color: white
+opacity: 0.9
+
+/* المبلغ */
+color: #FFFFFF
+font-size: 2.5rem
+text-shadow: 0 4px 24px rgba(0, 0, 0, 0.2)
+
+/* العملة */
+color: white
+opacity: 0.8
+```
+
+**الحساب:**
+
+```javascript
+const avgDaily = totalExpenses / new Date().getDate();
+// المبلغ.toLocaleString('ar-SY', { maximumFractionDigits: 0 })
+```
+
+### 📏 المسافات والأبعاد الكاملة
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding-bottom: 6rem /* pb-24 */
+position: relative
+overflow: hidden
+
+/* المحتوى */
+padding: 0 1.5rem /* px-6 */
+display: flex
+flex-direction: column
+gap: 1.5rem /* space-y-6 */
+```
+
+### ⚡ التفاعلات والحركات
+
+#### تبديل الفترة الزمنية
+
+```javascript
+const [period, setPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
+
+// تغيير الاختيار
+onClick={() => setPeriod('weekly')}
+
+// تأثير بصري
+transition: all
+```
+
+#### المنطق والحسابات
+
+```javascript
+const thisMonth = new Date().getMonth();
+const thisYear = new Date().getFullYear();
+
+// فلترة معاملات الشهر الحالي
+const monthTransactions = transactions.filter(
+  (t) => t.date.getMonth() === thisMonth && t.date.getFullYear() === thisYear
+);
+
+// المصاريف الإجمالية
+const totalExpenses = monthTransactions
+  .filter((t) => t.type === "expense")
+  .reduce((sum, t) => sum + t.amount, 0);
+
+// الدخل الإجمالي
+const totalIncome = monthTransactions
+  .filter((t) => t.type === "income")
+  .reduce((sum, t) => sum + t.amount, 0);
+
+// الصافي
+const net = totalIncome - totalExpenses;
+
+// توزيع الفئات
+const categoryData = categories
+  .map((cat) => {
+    const amount = monthTransactions
+      .filter((t) => t.category === cat.name && t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+    return {
+      name: cat.name,
+      value: amount,
+      color: cat.color,
+    };
+  })
+  .filter((d) => d.value > 0);
+```
+
+### 🔤 الأيقونات المستخدمة
+
+```javascript
+import {
+  Home, // شريط التنقل - الرئيسية
+  Receipt, // شريط التنقل - المعاملات
+  BarChart3, // شريط التنقل - الإحصاءات (نشط)
+  Wallet, // شريط التنقل - الميزانيات
+  Settings, // شريط التنقل - الإعدادات
+  TrendingUp, // للإشارة إلى الارتفاع
+  TrendingDown, // للإشارة إلى الانخفاض
+} from "lucide-react";
+```
 
 ---
 
@@ -1781,7 +2655,7 @@ text-color: #FFFFFF
 └─────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان
+### 🎨 نظام الألوان الكامل
 
 #### 1. الخلفية
 
@@ -1789,34 +2663,137 @@ text-color: #FFFFFF
 background: linear-gradient(135deg, #e3f2fd 0%, #f4f7f9 100%);
 ```
 
-#### 2. بطاقات الحسابات (Gradients)
+#### 2. بطاقات الحسابات (Account Gradients)
 
-يختلف التدرج اللوني حسب نوع الحساب:
-
-- **نقدي (Cash):**
-  ```css
-  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
-  ```
-- **بنك (Bank):**
-  ```css
-  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
-  ```
-- **بطاقة (Card):**
-  ```css
-  background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
-  ```
-
-#### 3. الزر العائم (FAB)
+**نقدي (Cash):**
 
 ```css
+background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)
+color: white
+padding: 1.5rem /* p-6 */
+border-radius: 20px
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+```
+
+**بنك (Bank):**
+
+```css
+background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%)
+color: white
+padding: 1.5rem /* p-6 */
+border-radius: 20px
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+```
+
+**بطاقة (Card):**
+
+```css
+background: linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%)
+color: white
+padding: 1.5rem /* p-6 */
+border-radius: 20px
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+```
+
+#### 3. محتوى البطاقة
+
+```css
+/* العنوان وأيقونة النوع */
+display: flex
+align-items: center
+justify-content: space-between
+margin-bottom: 1rem /* mb-4 */
+
+/* دائرة الأيقونة */
+width: 40px /* w-10 */
+height: 40px /* h-10 */
+border-radius: 9999px
+background: rgba(255, 255, 255, 0.2)
+display: flex
+align-items: center
+justify-content: center
+
+/* المبلغ */
+font-size: 1.5rem /* text-2xl */
+color: white
+```
+
+#### 4. الزر العائم (FAB)
+
+```css
+position: fixed
+bottom: 6rem /* bottom-24 */
+left: 50%
+transform: translateX(-50%)
+width: 64px /* w-16 */
+height: 64px /* h-16 */
+border-radius: 9999px
 background-color: #2E7D32
 box-shadow: 0 8px 24px rgba(46, 125, 50, 0.4)
+display: flex
+align-items: center
+justify-content: center
+color: white
+transition: all
+
+:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+```
+
+### 📏 المسافات والأبعاد
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding-bottom: 5rem /* pb-20 */
+
+/* العنوان */
+padding: 1.5rem /* p-6 */
+padding-bottom: 1rem /* pb-4 */
+text-align: center
+color: #2E7D32
+
+/* قائمة البطاقات */
+padding: 0 1.5rem /* px-6 */
+display: flex
+flex-direction: column
+gap: 1rem /* space-y-4 */
+```
+
+### 🔤 الأيقونات التعبيرية
+
+```javascript
+// حسب نوع الحساب
+const getAccountIcon = (type: Account["type"]) => {
+  switch (type) {
+    case "cash":
+      return "💵";
+    case "bank":
+      return "🏦";
+    case "card":
+      return "💳";
+  }
+};
+
+// أيقونة FAB
+import { Plus } from "lucide-react";
 ```
 
 ### ⚡ التفاعلات
 
-- **إضافة حساب:** عند الضغط على الزر العائم، تظهر نوافذ منبثقة (Prompts) لإدخال الاسم، النوع، والرصيد.
-- **أيقونات النوع:** يتم عرض أيقونة تعبيرية (Emoji) بناءً على نوع الحساب (💵، 🏦، 💳).
+```javascript
+// عند الضغط على FAB
+onClick={() => {
+  const name = prompt('اسم الحساب:');
+  if (!name) return;
+  const typeStr = prompt('نوع الحساب (cash/bank/card):');
+  const type = (typeStr === 'cash' || typeStr === 'bank' || typeStr === 'card') ? typeStr : 'cash';
+  const balanceStr = prompt('الرصيد الابتدائي:');
+  const balance = balanceStr ? parseFloat(balanceStr) : 0;
+  onAddAccount({ name, type, balance });
+}}
+```
 
 ---
 
@@ -1842,38 +2819,136 @@ box-shadow: 0 8px 24px rgba(46, 125, 50, 0.4)
 └─────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان
+### 🎨 نظام الألوان الكامل
 
-#### 1. الخلفية والديكور
+#### 1. الخلفية
 
 ```css
-background: linear-gradient(135deg, #e3f2fd 0%, #f4f7f9 100%);
+background: linear-gradient(135deg, #E3F2FD 0%, #F4F7F9 100%)
+position: relative
 ```
 
-- **أشكال زخرفية:** دوائر شفافة بألوان `#2E7D32` و `#FFC107` لإضافة حيوية.
-
-#### 2. عناصر الفئات (Grid Items)
+#### 2. الأشكال الزخرفية (Decorative Shapes)
 
 ```css
-aspect-ratio: 1/1 (مربع)
-border-radius: 20px
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
-color: white
-```
-
-- **اللون:** ديناميكي حسب لون الفئة المحدد.
-
-#### 3. زر الإضافة
-
-```css
+/* دائرة أعلى يمين */
+position: absolute
+top: 5rem /* top-20 */
+right: 2.5rem /* right-10 */
+width: 5rem /* w-20 */
+height: 5rem /* h-20 */
+border-radius: 9999px
 background-color: #2E7D32
-border-radius: 20px
-box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
+opacity: 0.1
+
+/* دائرة أسفل يسار */
+position: absolute
+bottom: 10rem /* bottom-40 */
+left: 2.5rem /* left-10 */
+width: 8rem /* w-32 */
+height: 8rem /* h-32 */
+border-radius: 9999px
+background-color: #FFC107
+opacity: 0.1
 ```
 
-### 🔤 الأيقونات
+#### 3. عناصر شبكة الفئات (Grid Items)
 
-- يتم استخدام مكتبة **Lucide React** وربط أسماء الأيقونات (مثل 'utensils', 'car') بمكونات الأيقونات الفعلية.
+```css
+aspect-ratio: 1/1 /* مربع */
+border-radius: 20px
+display: flex
+flex-direction: column
+align-items: center
+justify-content: center
+color: white
+transition: transform
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+
+/* لون الخلفية ديناميكي */
+background-color: ${category.color}
+
+:hover {
+  transform: scale(1.05);
+}
+
+/* الأيقونة */
+size: 32px
+fill: white
+
+/* اسم الفئة */
+margin-top: 0.5rem /* mt-2 */
+font-size: 0.875rem /* text-sm */
+text-align: center
+padding: 0 0.5rem /* px-2 */
+```
+
+#### 4. زر الإضافة
+
+```css
+width: 100%
+padding: 1rem 0 /* py-4 */
+border-radius: 20px
+background-color: #2E7D32
+color: white
+box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
+
+display: flex
+align-items: center
+justify-content: center
+gap: 0.5rem /* gap-2 */
+```
+
+### 📏 المسافات والأبعاد
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding: 1.5rem /* p-6 */
+
+/* العنوان */
+margin-bottom: 2rem /* mb-8 */
+
+/* زر الرجوع */
+margin-bottom: 1rem /* mb-4 */
+color: #4B5563 /* gray-600 */
+
+/* الشبكة */
+display: grid
+grid-template-columns: repeat(3, 1fr)
+gap: 1rem /* gap-4 */
+margin-bottom: 1.5rem /* mb-6 */
+```
+
+### 🔤 الأيقونات المستخدمة
+
+```javascript
+import {
+  Utensils, // طعام
+  Car, // مواصلات
+  ShoppingBag, // تسوق
+  Film, // ترفيه
+  Heart, // صحة
+  Briefcase, // عمل
+  FileText, // فواتير
+  Book, // تعليم
+  MoreHorizontal, // أخرى
+  Plus, // زر الإضافة
+} from "lucide-react";
+
+// خريطة الأيقونات
+const iconMap: { [key: string]: any } = {
+  utensils: Utensils,
+  car: Car,
+  "shopping-bag": ShoppingBag,
+  film: Film,
+  heart: Heart,
+  briefcase: Briefcase,
+  "file-text": FileText,
+  book: Book,
+  "more-horizontal": MoreHorizontal,
+};
+```
 
 ---
 
@@ -1907,35 +2982,200 @@ box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
 └─────────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان وحالات الميزانية
+### 🎨 نظام الألوان الكامل
 
-#### 1. شريط التقدم (Progress Bar)
+#### 1. الخلفية والدوائر الضبابية
 
-يعتمد اللون على نسبة الاستهلاك:
+```css
+background: linear-gradient(180deg, #DFF1FF 0%, #F9FBFD 100%)
 
-- **طبيعي (< 80%):** `#4CAF50` (أخضر)
-- **تحذير (80% - 100%):** `#FFC107` (ذهبي)
-- **تجاوز (> 100%):** `#E53935` (أحمر)
+/* دائرة 1 */
+width: 250px
+height: 250px
+background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)
+filter: blur(50px)
+opacity: 0.3
+position: { top: 10%, left: 10% }
 
-#### 2. بطاقة الميزانية (Budget Card)
+/* دائرة 2 */
+width: 200px
+height: 200px
+background: radial-gradient(circle, rgba(179, 229, 252, 0.6) 0%, transparent 70%)
+filter: blur(40px)
+opacity: 0.3
+position: { bottom: 30%, right: 15% }
+```
 
-- **التصميم:** Glassmorphism
-- **في حالة التجاوز:**
-  - حدود حمراء: `border: 1px solid rgba(229, 57, 53, 0.3)`
-  - خلفية حمراء خفيفة متدرجة.
-  - أيقونة تحذير نابضة (Pulse Animation).
+#### 2. رأس الصفحة (Glassmorphic Header)
 
-#### 3. تأثيرات الحركة (Animations)
+```css
+padding: 1.5rem /* p-6 */
+padding-bottom: 1rem /* pb-4 */
 
-- **Pulse:** للأيقونة التحذيرية عند تجاوز الميزانية.
-- **Shimmer:** لمعان يتحرك عبر شريط التقدم لإضافة حيوية.
+/* الحاوية الداخلية */
+background: rgba(255, 255, 255, 0.4)
+backdrop-filter: blur(24px)
+border-radius: 32px
+border: 1px solid rgba(255, 255, 255, 0.6)
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08)
+padding: 1.5rem
 
-### ⚡ التفاعلات
+/* العنوان */
+text-align: center
+color: #2E7D32
+```
 
-- **إضافة ميزانية:** زر عائم يطلب اسم الفئة والمبلغ.
-- **تنبيهات:** تظهر رسالة "تجاوز بمقدار..." باللون الأحمر عند تخطي الحد المسموح.
+#### 3. بطاقة الميزانية (Budget Card)
 
----
+```css
+/* الحاوية */
+padding: 1.5rem /* p-6 */
+position: relative
+overflow: hidden
+background: rgba(255, 255, 255, 0.6)
+backdrop-filter: blur(16px)
+border-radius: 24px
+border: 1px solid rgba(255, 255, 255, 0.7)
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
+```
+
+**حالة التجاوز:**
+
+```css
+/* الحدود */
+border: 1px solid rgba(229, 57, 53, 0.3)
+
+/* الظل */
+box-shadow: 0 8px 24px rgba(229, 57, 53, 0.2)
+
+/* خلفية متدرجة خفيفة */
+position: absolute
+inset: 0
+opacity: 0.05
+pointer-events: none
+background: linear-gradient(135deg, #E53935 0%, #F44336 100%)
+```
+
+#### 4. أيقونة الفئة في البطاقة
+
+```css
+/* الدائرة الخارجية */
+width: 56px /* w-14 */
+height: 56px /* h-14 */
+border-radius: 9999px
+background: linear-gradient(135deg, ${categoryColor}40 0%, ${categoryColor}20 100%)
+box-shadow: 0 4px 12px ${categoryColor}30
+display: flex
+align-items: center
+justify-content: center
+
+/* الدائرة الداخلية */
+width: 28px /* w-7 */
+height: 28px /* h-7 */
+border-radius: 9999px
+background-color: ${categoryColor}
+box-shadow: 0 0 12px ${categoryColor}60
+```
+
+#### 5. شريط التقدم (Progress Bar)
+
+```css
+/* الحاوية */
+width: 100%
+height: 16px /* h-4 */
+border-radius: 9999px
+overflow: hidden
+background: rgba(0, 0, 0, 0.05)
+
+/* الشريط الداخلي */
+height: 100%
+transition: all
+position: relative
+overflow: hidden
+```
+
+**ألوان الشريط حسب النسبة:**
+
+```javascript
+const getProgressColor = (percentage: number) => {
+  if (percentage > 100) return '#E53935';     // تجاوز - أحمر
+  if (percentage > 80) return '#FFC107';      // تحذير - ذهبي
+  return '#4CAF50';                            // طبيعي - أخضر
+};
+
+// التدرج
+background: linear-gradient(90deg, ${progressColor} 0%, ${progressColor}dd 100%)
+box-shadow: 0 0 12px ${progressColor}60
+```
+
+#### 6. تأثير اللمعان (Shimmer Effect)
+
+```css
+/* داخل شريط التقدم */
+position: absolute
+inset: 0
+opacity: 0.3
+background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)
+animation: shimmer 2s infinite
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+```
+
+#### 7. أيقونة التحذير (Pulse Animation)
+
+```css
+/* دائرة التحذير */
+width: 40px /* w-10 */
+height: 40px /* h-10 */
+border-radius: 9999px
+display: flex
+align-items: center
+justify-content: center
+background: rgba(229, 57, 53, 0.1)
+animation: pulse 2s infinite
+
+/* الأيقونة */
+icon: AlertCircle (Lucide React)
+size: 20px
+color: #E53935
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+```
+
+### 📏 المسافات والأبعاد
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding-bottom: 6rem /* pb-24 */
+position: relative
+overflow: hidden
+
+/* قائمة البطاقات */
+padding: 0 1.5rem /* px-6 */
+display: flex
+flex-direction: column
+gap: 1rem /* space-y-4 */
+
+/* داخل البطاقة */
+margin-bottom: 1.25rem /* mb-5 */ للعنوان
+margin-top: 0.75rem /* mt-3 */ للنسبة
+```
 
 ---
 
@@ -1975,7 +3215,7 @@ box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
 └─────────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان
+### 🎨 نظام الألوان الكامل
 
 #### 1. الخلفية
 
@@ -1983,9 +3223,46 @@ box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3)
 background: linear-gradient(180deg, #dff1ff 0%, #f9fbfd 100%);
 ```
 
-#### 2. بطاقات القوائم (Menu Cards)
+#### 2. الدوائر الضبابية
 
 ```css
+/* دائرة 1 */
+width: 250px
+height: 250px
+background: radial-gradient(circle, rgba(176, 242, 222, 0.6) 0%, transparent 70%)
+filter: blur(50px)
+opacity: 0.3
+position: { top: 8%, right: 8% }
+
+/* دائرة 2 */
+width: 180px
+height: 180px
+background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%)
+filter: blur(35px)
+opacity: 0.2
+position: { bottom: 20%, left: 12% }
+```
+
+#### 3. تسميات الأقسام (Section Labels)
+
+```css
+display: inline-block
+padding: 0.5rem 1rem /* px-4 py-2 */
+margin-bottom: 0.75rem /* mb-3 */
+border-radius: 9999px
+background: rgba(255, 255, 255, 0.5)
+backdrop-filter: blur(16px)
+border: 1px solid rgba(255, 255, 255, 0.7)
+
+/* النص */
+color: #374151 /* gray-700 */
+font-size: 0.875rem /* text-sm */
+```
+
+#### 4. بطاقات القوائم (Menu Cards)
+
+```css
+overflow: hidden
 background: rgba(255, 255, 255, 0.6)
 backdrop-filter: blur(16px)
 border-radius: 24px
@@ -1993,19 +3270,95 @@ border: 1px solid rgba(255, 255, 255, 0.7)
 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)
 ```
 
-#### 3. أيقونات القائمة
+#### 5. عناصر القائمة (Menu Items)
 
 ```css
-/* الحاوية الدائرية للأيقونة */
-background: linear-gradient(135deg, rgba(46, 125, 50, 0.15) 0%, rgba(96, 173, 94, 0.1) 100%)
-box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1)
-color: #2E7D32 /* لون الأيقونة */
+width: 100%
+padding: 1.25rem /* p-5 */
+display: flex
+align-items: center
+gap: 1rem /* gap-4 */
+transition: all
+
+/* الخط الفاصل */
+border-bottom: 1px solid rgba(0, 0, 0, 0.05)
+
+:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
 ```
 
-### ⚡ التفاعلات
+#### 6. دائرة الأيقونة
 
-- **Hover:** عند مرور الماوس على أي عنصر، تتغير الخلفية إلى `rgba(255, 255, 255, 0.5)` لإعطاء رد فعل بصري.
-- **التنقل:** الأسهم الجانبية (`ChevronLeft`) تشير إلى أن العنصر قابل للنقر.
+```css
+width: 48px /* w-12 */
+height: 48px /* h-12 */
+border-radius: 9999px
+display: flex
+align-items: center
+justify-content: center
+background: linear-gradient(135deg, rgba(46, 125, 50, 0.15) 0%, rgba(96, 173, 94, 0.1) 100%)
+box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1)
+
+/* الأيقونة */
+size: 20px
+color: #2E7D32
+```
+
+#### 7. التذييل (Footer)
+
+```css
+text-align: center
+padding: 1.5rem /* py-6 */
+border-radius: 16px /* rounded-2xl */
+background: rgba(255, 255, 255, 0.4)
+backdrop-filter: blur(16px)
+border: 1px solid rgba(255, 255, 255, 0.6)
+
+/* رقم الإصدار */
+color: #9CA3AF /* gray-400 */
+font-size: 0.875rem /* text-sm */
+
+/* النص الثانوي */
+color: #D1D5DB /* gray-300 */
+font-size: 0.75rem /* text-xs */
+margin-top: 0.25rem /* mt-1 */
+```
+
+### 🔤 الأيقونات المستخدمة
+
+```javascript
+import {
+  ChevronLeft, // سهم التنقل
+  DollarSign, // العملة
+  Globe, // اللغة
+  Download, // تصدير البيانات
+  Upload, // استيراد البيانات
+  Cloud, // النسخ الاحتياطي
+  Info, // معلومات التطبيق
+  Home, // شريط التنقل
+  Receipt, // المعاملات
+  BarChart3, // الإحصاءات
+  Wallet, // الميزانيات
+  Settings, // الإعدادات (نشط)
+} from "lucide-react";
+```
+
+### 📏 المسافات والأبعاد
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding-bottom: 6rem /* pb-24 */
+position: relative
+overflow: hidden
+
+/* أقسام الإعدادات */
+padding: 0 1.5rem /* px-6 */
+display: flex
+flex-direction: column
+gap: 1.5rem /* space-y-6 */
+```
 
 ---
 
@@ -2034,50 +3387,161 @@ color: #2E7D32 /* لون الأيقونة */
 └─────────────────────────────────┘
 ```
 
-### 🎨 نظام الألوان
+### 🎨 نظام الألوان الكامل
 
 #### 1. الخلفية
 
 ```css
 background-color: #F5F5F5
 backdrop-filter: blur(10px)
+min-height: 100vh
+padding: 1.5rem /* p-6 */
 ```
 
 #### 2. البطاقة الرئيسية
 
 ```css
+padding: 2rem /* p-8 */
+border-radius: 20px
 background: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)
 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12)
+margin-bottom: 1.5rem /* mb-6 */
+```
+
+#### 3. قسم المبلغ (Amount Section)
+
+```css
+text-align: center
+margin-bottom: 2rem /* mb-8 */
+
+/* التسمية */
+color: #4B5563 /* gray-600 */
+margin-bottom: 0.5rem /* mb-2 */
+
+/* المبلغ - مصروف */
+color: #E53935
+font-size: 3rem
+margin-bottom: 0.25rem /* mb-1 */
+
+/* المبلغ - دخل */
+color: #4CAF50
+font-size: 3rem
+
+/* العملة */
+color: #6B7280 /* gray-500 */
+```
+
+#### 4. صفوف التفاصيل
+
+```css
+display: flex
+align-items: center
+gap: 1rem /* gap-4 */
+padding: 1rem /* p-4 */
+background-color: white
+border-radius: 14px
+
+/* الأيقونة */
+size: 20px
+color: #2E7D32
+
+/* التسمية */
+color: #6B7280 /* gray-500 */
+font-size: 0.875rem /* text-sm */
+
+/* القيمة */
+color: #1F2937 /* gray-800 */
+```
+
+#### 5. صورة الإيصال
+
+```css
+padding: 1rem /* p-4 */
+background-color: white
+border-radius: 14px
+
+/* الصورة */
+width: 100%
+border-radius: 14px
+```
+
+#### 6. أزرار الإجراءات
+
+```css
+display: flex
+gap: 1rem /* gap-4 */
+
+/* زر التعديل */
+flex: 1
+padding: 1rem 0 /* py-4 */
 border-radius: 20px
-```
-
-#### 3. المبلغ (Typography)
-
-- **مصروف:** `#E53935` (أحمر)
-- **دخل:** `#4CAF50` (أخضر)
-- **الحجم:** `3rem` (كبير جداً للتركيز)
-
-#### 4. أزرار الإجراءات (Action Buttons)
-
-**زر التعديل:**
-
-```css
+display: flex
+align-items: center
+justify-content: center
+gap: 0.5rem /* gap-2 */
 background-color: #FFC107 /* Amber */
-color: #FFFFFF
+color: white
 box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3)
-```
 
-**زر الحذف:**
-
-```css
+/* زر الحذف */
+flex: 1
+padding: 1rem 0 /* py-4 */
+border-radius: 20px
+display: flex
+align-items: center
+justify-content: center
+gap: 0.5rem /* gap-2 */
 background-color: #E53935 /* Red */
-color: #FFFFFF
+color: white
 box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3)
 ```
 
-### 🔤 الأيقونات
+### 🔤 الأيقونات المستخدمة
 
-- استخدام أيقونات ملونة (`#2E7D32`) لتمييز كل حقل (Tag, Wallet, Calendar, FileText).
+```javascript
+import {
+  Edit2, // زر التعديل
+  Trash2, // زر الحذف
+  Calendar, // التاريخ
+  Wallet, // الحساب
+  Tag, // الفئة
+  FileText, // الملاحظات
+} from "lucide-react";
+```
+
+### 📏 المسافات والأبعاد
+
+```css
+/* الحاوية الرئيسية */
+min-height: 100vh
+padding: 1.5rem /* p-6 */
+
+/* العنوان */
+margin-bottom: 2rem /* mb-8 */
+
+/* زر الرجوع */
+margin-bottom: 1rem /* mb-4 */
+color: #4B5563 /* gray-600 */
+
+/* صفوف التفاصيل */
+display: flex
+flex-direction: column
+gap: 1rem /* space-y-4 */
+```
+
+### ⚡ التفاعلات
+
+```javascript
+// زر التعديل
+onClick={() => onEdit(transaction)}
+
+// زر الحذف
+onClick={() => {
+  if (confirm('هل أنت متأكد من حذف هذه المعاملة؟')) {
+    onDelete(transaction.id);
+  }
+}}
+```
 
 ---
 

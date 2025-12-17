@@ -110,3 +110,11 @@ final getBudgetStatusUseCaseProvider = Provider<GetBudgetStatusUseCase>((ref) {
 final getBudgetsUseCaseProvider = Provider<GetBudgetsUseCase>((ref) {
   return GetBudgetsUseCase(ref.watch(budgetRepositoryProvider));
 });
+
+final updateBudgetUseCaseProvider = Provider<UpdateBudgetUseCase>((ref) {
+  return UpdateBudgetUseCase(ref.watch(budgetRepositoryProvider));
+});
+
+final deleteBudgetUseCaseProvider = Provider<DeleteBudgetUseCase>((ref) {
+  return DeleteBudgetUseCase(ref.watch(budgetRepositoryProvider));
+});

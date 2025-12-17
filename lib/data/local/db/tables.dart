@@ -39,6 +39,8 @@ class Transactions extends Table {
   TextColumn get type => text().map(const TransactionTypeConverter())();
   TextColumn get categoryId => text().references(Categories, #id)();
   TextColumn get accountId => text().references(Accounts, #id)();
+  TextColumn get toAccountId =>
+      text().nullable().references(Accounts, #id)(); // Added for transfers
   DateTimeColumn get date => dateTime()();
   TextColumn get note => text().nullable()();
   TextColumn get receiptPath => text().nullable()();

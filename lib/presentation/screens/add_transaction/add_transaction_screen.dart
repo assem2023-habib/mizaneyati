@@ -14,12 +14,21 @@ import 'widgets/widgets.dart';
 // Domain Imports
 import '../../../domain/entities/account_entity.dart';
 import '../../../domain/entities/category_entity.dart';
+import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/models/transaction_type.dart';
+import '../../../domain/models/category_type.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  final TransactionEntity? transactionToEdit;
+  final TransactionType? initialType;
+
+  const AddTransactionScreen({
+    super.key,
+    this.transactionToEdit,
+    this.initialType,
+  });
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -27,12 +36,13 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
 }
 
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
-  bool _isExpense = true;
+  TransactionType _selectedType = TransactionType.expense;
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
   String? _selectedCategoryId;
   String? _selectedAccountId;
+  String? _selectedToAccountId; // For transfer
   DateTime _selectedDate = DateTime.now();
   File? _receiptImage;
 
@@ -43,6 +53,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialType != null) {
+      _selectedType = widget.initialType!;
+    }
     _loadData();
   }
 
@@ -63,8 +76,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         if (accountsResult is Success) {
           _accounts = (accountsResult as Success<List<AccountEntity>>).value;
         }
+        
+        // Initialize from existing transaction if editing
+        if (widget.transactionToEdit != null) {
+          _initForEdit(widget.transactionToEdit!);
+        }
+        
         _isLoading = false;
       });
+    }
+  }
+
+  void _initForEdit(TransactionEntity tx) {
+    _selectedType = tx.type;
+    _amountController.text = tx.amount.toMajor().toStringAsFixed(0); // Assuming no decimals for now
+    _selectedCategoryId = tx.categoryId;
+    _selectedAccountId = tx.accountId;
+    _selectedToAccountId = tx.toAccountId;
+    _selectedDate = tx.date.value;
+    _notesController.text = tx.note.value;
+    if (tx.receiptPath != null) {
+      _receiptImage = File(tx.receiptPath!);
     }
   }
 
@@ -134,6 +166,20 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       return;
     }
 
+    if (_selectedType == TransactionType.transfer && _selectedToAccountId == null) {
+       ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('الرجاء اختيار الحساب المحول إليه')));
+      return;
+    }
+    
+    if (_selectedType == TransactionType.transfer && _selectedAccountId == _selectedToAccountId) {
+       ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('لا يمكن التحويل لنفس الحساب')));
+      return;
+    }
+
     final amount = double.tryParse(_amountController.text);
     if (amount == null) {
       ScaffoldMessenger.of(
@@ -143,21 +189,35 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
 
     // Convert to minor units (e.g., cents/piasters)
-    final amountMinor = (amount).round();
+    final amountMinor = (amount * 100).round(); // Fixed multiplication
 
-    final type = _isExpense ? TransactionType.expense : TransactionType.income;
-
-    final result = await ref
-        .read(addTransactionUseCaseProvider)
-        .call(
-          amountMinor: amountMinor,
-          type: type,
-          categoryId: _selectedCategoryId!,
-          accountId: _selectedAccountId!,
-          date: _selectedDate,
-          note: _notesController.text.isNotEmpty ? _notesController.text : null,
-          receiptPath: _receiptImage?.path,
-        );
+    final result;
+    if (widget.transactionToEdit != null) {
+      result = await ref.read(updateTransactionUseCaseProvider).call(
+        transactionId: widget.transactionToEdit!.id,
+        amountMinor: amountMinor,
+        type: _selectedType,
+        categoryId: _selectedCategoryId,
+        accountId: _selectedAccountId,
+        toAccountId: _selectedType == TransactionType.transfer ? _selectedToAccountId : null,
+        date: _selectedDate,
+        note: _notesController.text,
+        receiptPath: _receiptImage?.path,
+      );
+    } else {
+      result = await ref
+          .read(addTransactionUseCaseProvider)
+          .call(
+            amountMinor: amountMinor,
+            type: _selectedType,
+            categoryId: _selectedCategoryId!,
+            accountId: _selectedAccountId!,
+            toAccountId: _selectedType == TransactionType.transfer ? _selectedToAccountId : null,
+            date: _selectedDate,
+            note: _notesController.text.isNotEmpty ? _notesController.text : null,
+            receiptPath: _receiptImage?.path,
+          );
+    }
 
     if (mounted) {
       if (result is Success) {
@@ -167,7 +227,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             backgroundColor: AppColors.primaryMain,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate refresh needed
       } else {
         final failure = (result as Fail).failure;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -196,7 +256,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              const AddTransactionHeader(),
+              AddTransactionHeader(isEditing: widget.transactionToEdit != null),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
@@ -204,9 +264,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TransactionTypeToggle(
-                        isExpense: _isExpense,
+                        selectedType: _selectedType,
                         onChanged: (value) =>
-                            setState(() => _isExpense = value),
+                            setState(() => _selectedType = value),
                       ),
                       const SizedBox(height: 24),
                       AmountInputField(controller: _amountController),
@@ -214,6 +274,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       _buildCategoryDropdown(),
                       const SizedBox(height: 16),
                       _buildAccountDropdown(),
+                      if (_selectedType == TransactionType.transfer) ...[
+                        const SizedBox(height: 16),
+                        _buildToAccountDropdown(),
+                      ],
                       const SizedBox(height: 16),
                       DatePickerField(
                         selectedDate: _selectedDate,
@@ -228,7 +292,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       ),
                       const SizedBox(height: 32),
                       CustomButton.primary(
-                        text: 'حفظ المعاملة',
+                        text: widget.transactionToEdit != null ? 'تحديث المعاملة' : 'حفظ المعاملة',
                         onPressed: _saveTransaction,
                       ),
                       const SizedBox(height: 24),
@@ -244,11 +308,20 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildCategoryDropdown() {
+    final filteredCategories = _categories.where((c) {
+      if (_selectedType == TransactionType.expense) {
+        return c.type == CategoryType.expense;
+      } else if (_selectedType == TransactionType.income) {
+        return c.type == CategoryType.income;
+      }
+      return true; // For transfer, show all or decide policy. Showing all for now.
+    }).toList();
+
     return StyledDropdownField<String>(
       value: _selectedCategoryId,
       hintText: 'الفئة',
       hintIcon: Icons.category_outlined,
-      items: _categories.map((category) {
+      items: filteredCategories.map((category) {
         return DropdownMenuItem<String>(
           value: category.id,
           child: Text(category.name.value, style: AppTextStyles.body),
@@ -261,7 +334,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Widget _buildAccountDropdown() {
     return StyledDropdownField<String>(
       value: _selectedAccountId,
-      hintText: 'الحساب',
+      hintText: _selectedType == TransactionType.transfer ? 'من حساب' : 'الحساب',
       hintIcon: Icons.account_balance_wallet_outlined,
       items: _accounts.map((account) {
         return DropdownMenuItem<String>(
@@ -270,6 +343,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         );
       }).toList(),
       onChanged: (val) => setState(() => _selectedAccountId = val),
+    );
+  }
+
+  Widget _buildToAccountDropdown() {
+    return StyledDropdownField<String>(
+      value: _selectedToAccountId,
+      hintText: 'إلى حساب',
+      hintIcon: Icons.account_balance_wallet,
+      items: _accounts.where((a) => a.id != _selectedAccountId).map((account) {
+        return DropdownMenuItem<String>(
+          value: account.id,
+          child: Text(account.name.value, style: AppTextStyles.body),
+        );
+      }).toList(),
+      onChanged: (val) => setState(() => _selectedToAccountId = val),
     );
   }
 }

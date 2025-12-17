@@ -4,7 +4,9 @@ import '../../../styles/app_text_styles.dart';
 
 /// Header widget for the Add Transaction screen
 class AddTransactionHeader extends StatelessWidget {
-  const AddTransactionHeader({super.key});
+  final bool isEditing;
+
+  const AddTransactionHeader({super.key, this.isEditing = false});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class AddTransactionHeader extends StatelessWidget {
               ),
             ),
           ),
-          Text('إضافة معاملة', style: AppTextStyles.h3),
+          Text(isEditing ? 'تعديل معاملة' : 'إضافة معاملة', style: AppTextStyles.h3),
           const SizedBox(width: 48), // Spacer to balance the "Cancel" button
         ],
       ),

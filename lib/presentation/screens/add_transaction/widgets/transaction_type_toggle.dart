@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../styles/app_colors.dart';
 import '../../../styles/app_text_styles.dart';
+import '../../../domain/models/transaction_type.dart';
 
-/// Toggle widget for switching between expense and income
+/// Toggle widget for switching between expense, income, and transfer
 class TransactionTypeToggle extends StatelessWidget {
-  final bool isExpense;
-  final ValueChanged<bool> onChanged;
+  final TransactionType selectedType;
+  final ValueChanged<TransactionType> onChanged;
 
   const TransactionTypeToggle({
     super.key,
-    required this.isExpense,
+    required this.selectedType,
     required this.onChanged,
   });
 
@@ -23,47 +24,34 @@ class TransactionTypeToggle extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isExpense ? AppColors.expense : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'مصروف',
-                  style: AppTextStyles.button.copyWith(
-                    color: isExpense ? Colors.white : AppColors.gray600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: !isExpense ? AppColors.income : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'دخل',
-                  style: AppTextStyles.button.copyWith(
-                    color: !isExpense ? Colors.white : AppColors.gray600,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildOption(TransactionType.expense, 'مصروف', AppColors.expense),
+          _buildOption(TransactionType.income, 'دخل', AppColors.income),
+          _buildOption(TransactionType.transfer, 'تحويل', AppColors.primaryMain),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOption(TransactionType type, String label, Color activeColor) {
+    final isSelected = selectedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onChanged(type),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: AppTextStyles.button.copyWith(
+              color: isSelected ? Colors.white : AppColors.gray600,
+            ),
+          ),
+        ),
       ),
     );
   }

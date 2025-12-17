@@ -105,8 +105,14 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Show add budget dialog
+        onPressed: () async {
+          final result = await showDialog<bool>(
+            context: context,
+            builder: (context) => const AddBudgetDialog(),
+          );
+          if (result == true) {
+            _loadBudgets();
+          }
         },
         backgroundColor: AppColors.primaryDark,
         child: const Icon(Icons.add, color: Colors.white),
@@ -150,101 +156,104 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
     final categoryName =
         _categoriesMap[status.budget.categoryId]?.name.value ?? 'ميزانية';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.gapMd),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(20),
-        border: isExceeded
-            ? Border.all(color: AppColors.expense.withOpacity(0.5))
-            : Border.all(color: Colors.white),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryMain.withOpacity(0.1),
-                      shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => _showBudgetOptions(status),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.gapMd),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(20),
+          border: isExceeded
+              ? Border.all(color: AppColors.expense.withOpacity(0.5))
+              : Border.all(color: Colors.white),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryMain.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet,
+                        color: AppColors.primaryMain,
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.account_balance_wallet,
-                      color: AppColors.primaryMain,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    categoryName,
-                    style: AppTextStyles.body.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (isExceeded) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Text(
-                      '(تجاوز!)',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.expense,
+                      categoryName,
+                      style: AppTextStyles.body.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (isExceeded) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '(تجاوز!)',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.expense,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-              Text(
-                '${(percentage * 100).toStringAsFixed(1)}%',
-                style: AppTextStyles.body.copyWith(
-                  color: progressColor,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${spent.toStringAsFixed(0)} ل.س',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: isExceeded ? AppColors.expense : AppColors.gray800,
-                  fontWeight: FontWeight.bold,
+                Text(
+                  '${(percentage * 100).toStringAsFixed(1)}%',
+                  style: AppTextStyles.body.copyWith(
+                    color: progressColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              Text(
-                '${limit.toStringAsFixed(0)} ل.س',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.gray600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: percentage > 1.0 ? 1.0 : percentage,
-              backgroundColor: AppColors.gray200,
-              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-              minHeight: 8,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${spent.toStringAsFixed(0)} ل.س',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isExceeded ? AppColors.expense : AppColors.gray800,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${limit.toStringAsFixed(0)} ل.س',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.gray600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: percentage > 1.0 ? 1.0 : percentage,
+                backgroundColor: AppColors.gray200,
+                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                minHeight: 8,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

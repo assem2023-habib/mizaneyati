@@ -11,6 +11,8 @@ import '../../../domain/models/account_type.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
 
+import 'add_account_dialog.dart';
+
 class AccountsScreen extends ConsumerStatefulWidget {
   const AccountsScreen({super.key});
 
@@ -84,8 +86,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Show add account dialog
+        onPressed: () async {
+          final result = await showDialog<bool>(
+            context: context,
+            builder: (context) => const AddAccountDialog(),
+          );
+          if (result == true) {
+            _loadAccounts();
+          }
         },
         backgroundColor: AppColors.primaryDark,
         icon: const Icon(Icons.add, color: Colors.white),
@@ -146,52 +154,55 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
         break;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: (gradient.colors.first).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => _showAccountOptions(account),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: (gradient.colors.first).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 8),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                account.name.value,
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.bold,
-                ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${account.balance.toMajor().toStringAsFixed(0)} ل.س',
-                style: AppTextStyles.h3.copyWith(
-                  color: Colors.white,
-                  fontSize: 18,
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  account.name.value,
+                  style: AppTextStyles.body.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 4),
+                Text(
+                  '${account.balance.toMajor().toStringAsFixed(0)} ل.س',
+                  style: AppTextStyles.h3.copyWith(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

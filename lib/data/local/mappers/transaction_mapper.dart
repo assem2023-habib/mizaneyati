@@ -27,6 +27,7 @@ extension TransactionMapper on Transaction {
       type: type,
       categoryId: categoryId,
       accountId: accountId,
+      toAccountId: toAccountId,
       date: getValueOrThrow(dateResult, 'date'),
       note: getValueOrThrow(noteResult, 'note'),
       receiptPath: receiptPath,
