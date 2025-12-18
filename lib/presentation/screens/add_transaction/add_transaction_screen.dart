@@ -19,6 +19,8 @@ import '../../../domain/models/transaction_type.dart';
 import '../../../domain/models/category_type.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
+import '../categories/categories_screen.dart';
+import '../accounts/accounts_screen.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final TransactionEntity? transactionToEdit;
@@ -317,6 +319,36 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       return true; // For transfer, show all or decide policy. Showing all for now.
     }).toList();
 
+    if (filteredCategories.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.category_outlined, color: AppColors.gray400, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('لا توجد فئات مناسبة. اضغط لإضافة فئة.', style: AppTextStyles.bodySecondary),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+                );
+                _loadData();
+              },
+              child: const Text('إضافة'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return StyledDropdownField<String>(
       value: _selectedCategoryId,
       hintText: 'الفئة',
@@ -332,6 +364,36 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildAccountDropdown() {
+    if (_accounts.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.gray300.withOpacity(0.5)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.account_balance_wallet_outlined, color: AppColors.gray400, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('لا توجد حسابات. اضغط لإضافة حساب.', style: AppTextStyles.bodySecondary),
+            ),
+            TextButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AccountsScreen()),
+                );
+                _loadData();
+              },
+              child: const Text('إضافة'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return StyledDropdownField<String>(
       value: _selectedAccountId,
       hintText: _selectedType == TransactionType.transfer ? 'من حساب' : 'الحساب',

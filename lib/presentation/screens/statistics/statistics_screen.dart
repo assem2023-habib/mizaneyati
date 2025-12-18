@@ -22,6 +22,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   String _selectedPeriod = 'شهري'; // 'شهري', 'أسبوعي', 'سنوي'
   int _touchedIndex = -1;
   bool _isLoading = true;
+  DateTime _anchorDate = DateTime.now();
 
   // Data
   double _totalIncome = 0;
@@ -63,7 +64,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
 
   void _processData(List<TransactionEntity> transactions, List<CategoryEntity> categories) {
     // 1. Filter by Period (Defaulting to Current Month for 'شهري')
-    final now = DateTime.now();
+    final now = _anchorDate;
     final filteredTransactions = transactions.where((t) {
       if (_selectedPeriod == 'شهري') {
         return t.date.value.month == now.month && t.date.value.year == now.year;
@@ -171,7 +172,32 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
         Text('الإحصائيات', style: AppTextStyles.h2),
         IconButton(
           icon: const Icon(Icons.calendar_today, color: AppColors.primaryDark),
-          onPressed: () {},
+          onPressed: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _anchorDate,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: AppColors.primaryDark,
+                      onPrimary: Colors.white,
+                      onSurface: AppColors.gray800,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (picked != null) {
+              setState(() {
+                _anchorDate = picked;
+              });
+              _loadData();
+            }
+          },
         ),
       ],
     );

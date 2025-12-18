@@ -9,7 +9,7 @@ import '../../../domain/value_objects/money.dart';
 import '../../../domain/value_objects/date_value.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
-import '../../../widgets/glassmorphic_container.dart';
+import '../../widgets/glassmorphic_container.dart';
 
 class AddBudgetDialog extends ConsumerStatefulWidget {
   final BudgetEntity? budgetToEdit;
@@ -79,7 +79,7 @@ class _AddBudgetDialogState extends ConsumerState<AddBudgetDialog> {
     final startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
     final endDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 0, 23, 59, 59);
 
-    Result<dynamic> result;
+    Object result;
     if (widget.budgetToEdit == null) {
       result = await ref.read(createBudgetUseCaseProvider).call(
         limitAmountMinor: amountMinor,
@@ -135,7 +135,7 @@ class _AddBudgetDialogState extends ConsumerState<AddBudgetDialog> {
               const SizedBox(height: 24),
               DropdownButtonFormField<String>(
                 value: _selectedCategoryId,
-                dropdownColor: AppColors.surface,
+                dropdownColor: Colors.white.withOpacity(0.2),
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'الفئة',
@@ -161,15 +161,19 @@ class _AddBudgetDialogState extends ConsumerState<AddBudgetDialog> {
               TextFormField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'الحد الشهري (ل.س)',
-                  labelStyle: TextStyle(color: Colors.white70),
+                style: const TextStyle(color: AppColors.gray800),
+                decoration: InputDecoration(
+                  labelText: 'الحد الشهري',
+                  labelStyle: const TextStyle(color: AppColors.gray600),
+                  filled: true,
+                  fillColor: Colors.white,
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30),
+                    borderSide: BorderSide(color: Colors.white),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: const BorderSide(color: AppColors.primaryMain),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
@@ -186,11 +190,9 @@ class _AddBudgetDialogState extends ConsumerState<AddBudgetDialog> {
                       ),
                     ),
                     Expanded(
-                      child: CustomButton(
+                      child: CustomButton.primary(
                         text: 'حفظ',
                         onPressed: _saveBudget,
-                        backgroundColor: AppColors.primaryMain,
-                        textColor: Colors.white,
                       ),
                     ),
                   ],

@@ -13,6 +13,7 @@ import '../../../application/providers/usecases_providers.dart';
 import '../../../core/utils/result.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/models/transaction_type.dart';
+import '../../../core/constants/app_constants.dart';
 
 /// شاشة الإعدادات
 /// التصميم مبني على SCREENS_DOCUMENTATION.md
@@ -69,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
       buffer.writeln('ID,Amount,Type,Category,Account,ToAccount,Date,Note');
       for (var tx in transactions) {
         buffer.writeln(
-            '${tx.id},${tx.amount.toMajor()},${tx.type.name},${tx.categoryId},${tx.accountId},${tx.toAccountId ?? ""},${tx.date.value.toIso8601String()},"${tx.note?.value.replaceAll('"', '""') ?? ''}"');
+            '${tx.id},${tx.amount.toMajor()},${tx.type.name},${tx.categoryId},${tx.accountId},${tx.toAccountId ?? ""},${tx.date.value.toIso8601String()},"${(tx.note?.value ?? '').replaceAll('"', '""')}"');
       }
 
       // 3. Write to file
@@ -250,6 +251,8 @@ class SettingsScreen extends ConsumerWidget {
 
   /// بناء أقسام الإعدادات
   Widget _buildSettingsSections(BuildContext context, WidgetRef ref) {
+    final currentCurrencyCode = ref.watch(selectedCurrencyProvider);
+    final currencyInfo = AppConstants.supportedCurrencies[currentCurrencyCode] ?? AppConstants.supportedCurrencies[AppConstants.defaultCurrency]!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.paddingMd),
       child: Column(
@@ -262,10 +265,34 @@ class SettingsScreen extends ConsumerWidget {
             _buildSettingsItem(
               icon: Icons.attach_money,
               title: 'العملة',
-              subtitle: 'SYP - ليرة سورية',
+              subtitle: '${currencyInfo.code} - ${currencyInfo.name}',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('قريباً')),
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (c) {
+                    return SafeArea(
+                      child: ListView(
+                        children: AppConstants.supportedCurrencies.values.map((ci) {
+                          final isSelected = ci.code == currentCurrencyCode;
+                          return ListTile(
+                            leading: const Icon(Icons.attach_money),
+                            title: Text('${ci.name} (${ci.code})'),
+                            trailing: isSelected ? const Icon(Icons.check, color: AppColors.primaryMain) : null,
+                            onTap: () {
+                              ref.read(selectedCurrencyProvider.notifier).state = ci.code;
+                              Navigator.pop(c);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('تم اختيار العملة: ${ci.code}')),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
                 );
               },
             ),

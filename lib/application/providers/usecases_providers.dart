@@ -1,6 +1,7 @@
 // lib/application/providers/usecases_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'repositories_providers.dart';
+import '../../core/constants/app_constants.dart';
 
 // Transaction UseCases
 import '../../domain/usecases/transaction/add_transaction_usecase.dart';
@@ -129,4 +130,10 @@ final updateBudgetUseCaseProvider = Provider<UpdateBudgetUseCase>((ref) {
 
 final deleteBudgetUseCaseProvider = Provider<DeleteBudgetUseCase>((ref) {
   return DeleteBudgetUseCase(ref.watch(budgetRepositoryProvider));
+});
+
+// --- App Settings Providers ---
+
+final selectedCurrencyProvider = StateProvider<String>((ref) {
+  return AppConstants.defaultCurrency;
 });

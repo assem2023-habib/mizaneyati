@@ -197,8 +197,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       body: GradientBackground.dashboard(
-        child: Stack(
-          children: [
+        child: SizedBox.expand(
+          child: Stack(
+            children: [
             // المحتوى الرئيسي
             SafeArea(
               bottom: false,
@@ -292,7 +293,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

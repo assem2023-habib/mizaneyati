@@ -384,7 +384,7 @@ class TransactionSearchDelegate extends SearchDelegate {
 
   Widget _buildList(BuildContext context) {
     final filtered = transactions.where((t) {
-      final note = t.note?.value.toLowerCase() ?? '';
+      final note = (t.note?.value ?? '').toLowerCase();
       final amount = t.amount.toMajor().toString();
       final category = categoriesMap[t.categoryId]?.name.value.toLowerCase() ?? '';
       final q = query.toLowerCase();
