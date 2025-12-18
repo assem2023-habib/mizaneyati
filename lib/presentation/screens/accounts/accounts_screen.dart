@@ -105,6 +105,89 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
     );
   }
 
+  Future<void> _showAccountOptions(AccountEntity account) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primaryMain),
+              title: const Text('تعديل الحساب'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AddAccountDialog(accountToEdit: account),
+                );
+                if (result == true) {
+                  _loadAccounts();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: AppColors.expense),
+              title: const Text('حذف الحساب'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDelete(account);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(AccountEntity account) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف الحساب'),
+        content: Text('هل أنت متأكد من حذف حساب "${account.name}"؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.expense),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final result = await ref.read(deleteAccountUseCaseProvider).call(account.id);
+      if (result is Success) {
+        _loadAccounts();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حذف الحساب بنجاح')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل الحذف: ${(result as Fail).failure.message}')),
+        );
+      }
+    }
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.paddingMd),

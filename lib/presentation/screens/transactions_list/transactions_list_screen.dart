@@ -233,7 +233,14 @@ class _TransactionsListScreenState
                                       amount: t.amount.toMajor(),
                                       isExpense: t.type.name == 'expense',
                                       date: t.date.value,
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => TransactionDetailsScreen(transactionId: t.id),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                 );
@@ -377,7 +384,7 @@ class TransactionSearchDelegate extends SearchDelegate {
 
   Widget _buildList(BuildContext context) {
     final filtered = transactions.where((t) {
-      final note = t.note.value.toLowerCase();
+      final note = t.note?.value.toLowerCase() ?? '';
       final amount = t.amount.toMajor().toString();
       final category = categoriesMap[t.categoryId]?.name.value.toLowerCase() ?? '';
       final q = query.toLowerCase();
@@ -417,7 +424,7 @@ class TransactionSearchDelegate extends SearchDelegate {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TransactionDetailsScreen(transaction: t),
+                builder: (context) => TransactionDetailsScreen(transactionId: t.id),
               ),
             );
           },

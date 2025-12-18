@@ -1,8 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../styles/app_colors.dart';
-import '../../../../styles/app_text_styles.dart';
-import '../../../../styles/app_spacing.dart';
+import '../../../styles/app_colors.dart';
+import '../../../styles/app_text_styles.dart';
+import '../../../styles/app_spacing.dart';
 
 class CategoryDistributionCard extends StatefulWidget {
   final Map<String, double> categoryTotals;
@@ -34,13 +34,21 @@ class _CategoryDistributionCardState extends State<CategoryDistributionCard> {
     final sortedEntries = widget.categoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    // Take top 4 and group others
-    final topEntries = sortedEntries.take(4).toList();
-    // In a real app, you might group the rest into "Other", 
-    // but for now let's just show top 4 to keep UI clean or all if small number.
-    
-    // Let's actually show all for now, but limit the list height
-    final displayEntries = sortedEntries; 
+    // Group into "Other" if more than 5 categories
+    final List<MapEntry<String, double>> displayEntries;
+    if (sortedEntries.length > 5) {
+      final topEntries = sortedEntries.take(4).toList();
+      final otherEntries = sortedEntries.skip(4);
+      
+      final double otherTotal = otherEntries.fold(0, (sum, item) => sum + item.value);
+      
+      displayEntries = [
+        ...topEntries,
+        MapEntry('أخرى', otherTotal),
+      ];
+    } else {
+      displayEntries = sortedEntries;
+    } 
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.paddingLg),
@@ -102,43 +110,7 @@ class _CategoryDistributionCardState extends State<CategoryDistributionCard> {
               // Legend Section
               Expanded(
                 flex: 2,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: displayEntries.map((entry) {
-                    final percentage = (entry.value / widget.totalExpense) * 100;
-                    final color = widget.categoryColors[entry.key] ?? AppColors.gray400;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              entry.key,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            '${percentage.toStringAsFixed(0)}%',
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
+                child: _buildLegend(displayEntries),
               ),
             ],
           ),
@@ -148,34 +120,71 @@ class _CategoryDistributionCardState extends State<CategoryDistributionCard> {
   }
 
   List<PieChartSectionData> _showingSections(
-    List<MapEntry<String, double>> entries,
-  ) {
+      List<MapEntry<String, double>> entries) {
     return List.generate(entries.length, (i) {
       final isTouched = i == touchedIndex;
-      final fontSize = isTouched ? 16.0 : 12.0;
-      final radius = isTouched ? 50.0 : 40.0;
+      final fontSize = isTouched ? 20.0 : 14.0;
+      final radius = isTouched ? 55.0 : 45.0;
       final entry = entries[i];
-      final color = widget.categoryColors[entry.key] ?? AppColors.gray400;
-      final percentage = (entry.value / widget.totalExpense) * 100;
+      final percentage = (entry.value / widget.totalExpense * 100);
+      
+      final color = entry.key == 'أخرى' 
+          ? Colors.grey 
+          : widget.categoryColors[entry.key] ?? AppColors.gray400;
 
       return PieChartSectionData(
         color: color,
         value: entry.value,
-        title: isTouched ? '${percentage.toStringAsFixed(0)}%' : '',
+        title: '${percentage.toStringAsFixed(0)}%',
         radius: radius,
         titleStyle: TextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+          shadows: const [Shadow(color: Colors.black26, blurRadius: 2)],
         ),
-        badgeWidget: isTouched ? null : _Badge(
-          entry.key, 
-          size: 30, 
-          borderColor: color,
-        ),
-        badgePositionPercentageOffset: .98,
       );
     });
+  }
+
+  Widget _buildLegend(List<MapEntry<String, double>> entries) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: entries.asMap().entries.map((entry) {
+        final index = entry.key;
+        final item = entry.value;
+        final color = item.key == 'أخرى' 
+            ? Colors.grey 
+            : widget.categoryColors[item.key] ?? AppColors.gray400;
+            
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.key,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: index == touchedIndex ? FontWeight.bold : null,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 }
 

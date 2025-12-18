@@ -4,11 +4,17 @@ import '../../styles/app_colors.dart';
 import '../../styles/app_text_styles.dart';
 import '../../widgets/custom_button.dart';
 import '../../../domain/models/account_type.dart';
+import '../../../domain/entities/account_entity.dart';
+import '../../../domain/value_objects/money.dart';
+import '../../../domain/value_objects/color_value.dart';
+import '../../../domain/value_objects/account_name.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
 
 class AddAccountDialog extends ConsumerStatefulWidget {
-  const AddAccountDialog({super.key});
+  final AccountEntity? accountToEdit;
+
+  const AddAccountDialog({super.key, this.accountToEdit});
 
   @override
   ConsumerState<AddAccountDialog> createState() => _AddAccountDialogState();
@@ -19,6 +25,16 @@ class _AddAccountDialogState extends ConsumerState<AddAccountDialog> {
   final _balanceController = TextEditingController();
   AccountType _selectedType = AccountType.cash;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.accountToEdit != null) {
+      _nameController.text = widget.accountToEdit!.name.value;
+      _balanceController.text = widget.accountToEdit!.balance.toMajor().toStringAsFixed(2);
+      _selectedType = widget.accountToEdit!.type;
+    }
+  }
 
   @override
   void dispose() {
@@ -50,13 +66,13 @@ class _AddAccountDialogState extends ConsumerState<AddAccountDialog> {
     
     final Result result;
     if (widget.accountToEdit != null) {
-      final updatedAccount = widget.accountToEdit!.copyWith(
-        name: AccountName(_nameController.text),
-        balance: Money(balanceMinor),
+      result = await ref.read(updateAccountUseCaseProvider).call(
+        id: widget.accountToEdit!.id,
+        name: _nameController.text,
+        balanceMinor: balanceMinor,
         type: _selectedType,
-        color: ColorValue(_getColorForType(_selectedType)),
+        color: _getColorForType(_selectedType),
       );
-      result = await ref.read(updateAccountUseCaseProvider).execute(updatedAccount);
     } else {
       result = await ref.read(createAccountUseCaseProvider).call(
         name: _nameController.text,

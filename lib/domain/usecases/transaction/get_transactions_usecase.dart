@@ -8,6 +8,10 @@ class GetTransactionsUseCase {
 
   GetTransactionsUseCase(this._txRepo);
 
+  Future<Result<List<TransactionEntity>>> execute() {
+    return _txRepo.getPaginated(limit: 1000);
+  }
+
   Future<Result<List<TransactionEntity>>> byDateRange(
     DateTime start,
     DateTime end,

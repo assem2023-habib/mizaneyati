@@ -5,6 +5,7 @@ import '../../styles/app_text_styles.dart';
 import '../../styles/app_spacing.dart';
 import '../../widgets/gradient_background.dart';
 import '../../widgets/custom_button.dart';
+import 'widgets/add_category_dialog.dart';
 
 // Domain Imports
 import '../../../domain/entities/category_entity.dart';
@@ -179,7 +180,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     );
 
     if (confirmed == true) {
-      final result = await ref.read(deleteCategoryUseCaseProvider).execute(category.id);
+      final result = await ref.read(deleteCategoryUseCaseProvider).call(category.id);
       if (result is Success) {
         _loadCategories();
         if (mounted) {

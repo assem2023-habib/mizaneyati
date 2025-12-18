@@ -6,6 +6,8 @@ import 'repositories_providers.dart';
 import '../../domain/usecases/transaction/add_transaction_usecase.dart';
 import '../../domain/usecases/transaction/update_transaction_usecase.dart';
 import '../../domain/usecases/transaction/delete_transaction_usecase.dart';
+import '../../domain/usecases/budget/update_budget_usecase.dart';
+import '../../domain/usecases/budget/delete_budget_usecase.dart';
 import '../../domain/usecases/transaction/get_transactions_usecase.dart';
 
 // Account UseCases
@@ -13,12 +15,14 @@ import '../../domain/usecases/account/create_account_usecase.dart';
 import '../../domain/usecases/account/update_account_usecase.dart';
 import '../../domain/usecases/account/delete_account_usecase.dart';
 import '../../domain/usecases/account/get_accounts_usecase.dart';
+import '../../domain/usecases/account/get_account_by_id_usecase.dart';
 
 // Category UseCases
 import '../../domain/usecases/category/create_category_usecase.dart';
 import '../../domain/usecases/category/update_category_usecase.dart';
 import '../../domain/usecases/category/delete_category_usecase.dart';
 import '../../domain/usecases/category/get_categories_usecase.dart';
+import '../../domain/usecases/category/get_category_by_id_usecase.dart';
 
 // Budget UseCases
 import '../../domain/usecases/budget/create_budget_usecase.dart';
@@ -76,6 +80,10 @@ final getAccountsUseCaseProvider = Provider<GetAccountsUseCase>((ref) {
   return GetAccountsUseCase(ref.watch(accountRepositoryProvider));
 });
 
+final getAccountByIdUseCaseProvider = Provider<GetAccountByIdUseCase>((ref) {
+  return GetAccountByIdUseCase(ref.watch(accountRepositoryProvider));
+});
+
 // --- Category UseCases ---
 
 final createCategoryUseCaseProvider = Provider<CreateCategoryUseCase>((ref) {
@@ -92,6 +100,10 @@ final deleteCategoryUseCaseProvider = Provider<DeleteCategoryUseCase>((ref) {
 
 final getCategoriesUseCaseProvider = Provider<GetCategoriesUseCase>((ref) {
   return GetCategoriesUseCase(ref.watch(categoryRepositoryProvider));
+});
+
+final getCategoryByIdUseCaseProvider = Provider<GetCategoryByIdUseCase>((ref) {
+  return GetCategoryByIdUseCase(ref.watch(categoryRepositoryProvider));
 });
 
 // --- Budget UseCases ---

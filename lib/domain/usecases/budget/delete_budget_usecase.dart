@@ -1,5 +1,5 @@
 import '../../repositories/budget_repository.dart';
-import '../../core/utils/result.dart';
+import '../../../core/utils/result.dart';
 
 class DeleteBudgetUseCase {
   final BudgetRepository _repository;

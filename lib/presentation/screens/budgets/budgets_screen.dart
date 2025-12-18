@@ -11,6 +11,7 @@ import '../../../domain/entities/category_entity.dart';
 import '../../../core/utils/result.dart';
 import '../../../application/providers/usecases_providers.dart';
 import '../../../domain/usecases/budget/get_budget_status_usecase.dart';
+import 'add_budget_dialog.dart';
 
 class BudgetsScreen extends ConsumerStatefulWidget {
   const BudgetsScreen({super.key});
@@ -108,7 +109,7 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
         onPressed: () async {
           final result = await showDialog<bool>(
             context: context,
-            builder: (context) => const AddBudgetDialog(),
+            builder: (context) => AddBudgetDialog(),
           );
           if (result == true) {
             _loadBudgets();
@@ -256,5 +257,92 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showBudgetOptions(BudgetStatus status) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.paddingMd),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primaryMain),
+              title: const Text('تعديل الميزانية'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AddBudgetDialog(budgetToEdit: status.budget),
+                );
+                if (result == true) {
+                  _loadBudgets();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: AppColors.expense),
+              title: const Text('حذف الميزانية'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDelete(status.budget);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BudgetEntity budget) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف الميزانية'),
+        content: const Text('هل أنت متأكد من حذف هذه الميزانية؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.expense),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final result = await ref.read(deleteBudgetUseCaseProvider).execute(budget.id);
+      if (result is Success) {
+        _loadBudgets();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم حذف الميزانية بنجاح')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('فشل الحذف: ${(result as Fail).failure.message}')),
+          );
+        }
+      }
+    }
   }
 }

@@ -66,15 +66,15 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     final now = DateTime.now();
     final filteredTransactions = transactions.where((t) {
       if (_selectedPeriod == 'شهري') {
-        return t.date.month == now.month && t.date.year == now.year;
+        return t.date.value.month == now.month && t.date.value.year == now.year;
       } else if (_selectedPeriod == 'سنوي') {
-        return t.date.year == now.year;
+        return t.date.value.year == now.year;
       } else {
         // Weekly: Current week
         // Simple logic: within last 7 days? Or current calendar week?
         // Let's say current calendar week.
         // For simplicity now, let's stick to Month logic being the default and robust one.
-        return t.date.month == now.month && t.date.year == now.year; 
+        return t.date.value.month == now.month && t.date.value.year == now.year; 
       }
     }).toList();
 
@@ -99,7 +99,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
         // The chart labels are "Sat, Sun, Mon...". 
         // Sat=6, Sun=7, Mon=1...
         // Index mapping: Sat->0, Sun->1, Mon->2, Tue->3, Wed->4, Thu->5, Fri->6
-        int dayIndex = (t.date.weekday + 1) % 7; // Mon(1)->2, Sat(6)->0, Sun(7)->1. 
+        int dayIndex = (t.date.value.weekday + 1) % 7; // Mon(1)->2, Sat(6)->0, Sun(7)->1. 
         // Wait:
         // Sat(6) + 1 = 7 % 7 = 0. Correct.
         // Sun(7) + 1 = 8 % 7 = 1. Correct.

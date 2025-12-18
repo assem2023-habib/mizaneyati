@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../styles/app_colors.dart';
 import '../../../styles/app_text_styles.dart';
-import '../../../domain/models/transaction_type.dart';
+import '../../../../domain/models/transaction_type.dart';
 
 /// Toggle widget for switching between expense, income, and transfer
 class TransactionTypeToggle extends StatelessWidget {

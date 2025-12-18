@@ -64,6 +64,7 @@ dependencies:
 
   # Share (تصدير تقارير)
   share_plus: ^10.0.2
+  flutter_colorpicker: ^1.1.0
 
   # Device & System Utils
   uuid: ^4.4.0

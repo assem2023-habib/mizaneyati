@@ -36,35 +36,44 @@ class _TransactionDetailsScreenState
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadTransactionDetails();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadTransactionDetails() async {
+    final result = await ref.read(getTransactionsUseCaseProvider).execute();
 
-    // جلب المعاملة
-    final transactionResult = await ref
-        .read(getTransactionByIdUseCaseProvider)
-        .execute(widget.transactionId);
+    if (result is Success<List<TransactionEntity>>) {
+      try {
+        final transaction = result.value.firstWhere(
+          (t) => t.id == widget.transactionId,
+          orElse: () => throw Exception('Transaction not found'),
+        );
+        setState(() {
+          _transaction = transaction;
+        });
 
-    if (transactionResult is Success<TransactionEntity>) {
-      _transaction = transactionResult.value;
+        // Load Category
+        final categoryResult = await ref
+            .read(getCategoryByIdUseCaseProvider)
+            .call(_transaction!.categoryId);
+        
+        if (categoryResult is Success) {
+          setState(() {
+            _category = (categoryResult as Success).value;
+          });
+        }
 
-      // جلب الفئة
-      final categoryResult = await ref
-          .read(getCategoryByIdUseCaseProvider)
-          .execute(_transaction!.categoryId);
-      if (categoryResult is Success<CategoryEntity>) {
-        _category = categoryResult.value;
-      }
-
-      // جلب الحساب
-      final accountResult = await ref
-          .read(getAccountByIdUseCaseProvider)
-          .execute(_transaction!.accountId);
-      if (accountResult is Success<AccountEntity>) {
-        _account = accountResult.value;
-      }
+        // Load Account
+        final accountResult = await ref
+            .read(getAccountByIdUseCaseProvider)
+            .call(_transaction!.accountId);
+        
+        if (accountResult is Success) {
+          setState(() {
+            _account = (accountResult as Success).value;
+          });
+        }
+      } catch (_) {}
     }
 
     if (mounted) {
@@ -238,12 +247,12 @@ class _TransactionDetailsScreenState
         ),
 
         // الملاحظات (إن وجدت)
-        if (_transaction!.note.value.isNotEmpty) ...[
+        if (_transaction!.note.value?.isNotEmpty ?? false) ...[
           const SizedBox(height: 12),
           _buildDetailRow(
             icon: Icons.notes_outlined,
             label: 'ملاحظات',
-            value: _transaction!.note.value,
+            value: _transaction!.note.value ?? '',
           ),
         ],
       ],
@@ -435,7 +444,7 @@ class _TransactionDetailsScreenState
   Future<void> _deleteTransaction() async {
     final result = await ref
         .read(deleteTransactionUseCaseProvider)
-        .execute(_transaction!.id);
+        .call(_transaction!.id);
 
     if (mounted) {
       if (result is Success) {

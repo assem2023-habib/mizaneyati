@@ -91,7 +91,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final transactions = (transactionsResult as Success<List<TransactionEntity>>).value;
         
         // Sort by date descending
-        transactions.sort((a, b) => b.date.compareTo(a.date));
+        transactions.sort((a, b) => b.date.value.compareTo(a.date.value));
 
         // Process for Recent List
         mappedTransactions = transactions.take(5).map((t) {

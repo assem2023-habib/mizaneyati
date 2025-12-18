@@ -12,6 +12,7 @@ import '../../widgets/glassmorphic_container.dart';
 import '../../../application/providers/usecases_providers.dart';
 import '../../../core/utils/result.dart';
 import '../../../domain/entities/transaction_entity.dart';
+import '../../../domain/models/transaction_type.dart';
 
 /// شاشة الإعدادات
 /// التصميم مبني على SCREENS_DOCUMENTATION.md
@@ -68,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
       buffer.writeln('ID,Amount,Type,Category,Account,ToAccount,Date,Note');
       for (var tx in transactions) {
         buffer.writeln(
-            '${tx.id},${tx.amount.toMajor()},${tx.type.name},${tx.categoryId},${tx.accountId},${tx.toAccountId ?? ""},${tx.date.value.toIso8601String()},"${tx.note.value.replaceAll('"', '""')}"');
+            '${tx.id},${tx.amount.toMajor()},${tx.type.name},${tx.categoryId},${tx.accountId},${tx.toAccountId ?? ""},${tx.date.value.toIso8601String()},"${tx.note?.value.replaceAll('"', '""') ?? ''}"');
       }
 
       // 3. Write to file

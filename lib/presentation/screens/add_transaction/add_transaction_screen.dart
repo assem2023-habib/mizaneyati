@@ -94,7 +94,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     _selectedAccountId = tx.accountId;
     _selectedToAccountId = tx.toAccountId;
     _selectedDate = tx.date.value;
-    _notesController.text = tx.note.value;
+    _notesController.text = tx.note.value ?? '';
     if (tx.receiptPath != null) {
       _receiptImage = File(tx.receiptPath!);
     }
@@ -266,7 +266,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       TransactionTypeToggle(
                         selectedType: _selectedType,
                         onChanged: (value) =>
-                            setState(() => _selectedType = value),
+                        setState(() => _selectedType = value as TransactionType),
                       ),
                       const SizedBox(height: 24),
                       AmountInputField(controller: _amountController),
